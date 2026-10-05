@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mission Mode Financial Model</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a working table. Left rail = journey steps, centre = the phone with a Today / Mission Mode switch, right = evidence card. Plum ground, saffron marks what is new. */
+:root{
+  --bg:#f6f2f5; --panel:#ffffff; --ink:#24101f; --ink2:#5c4757; --muted:#8a7486; --line:#e5d8e2;
+  --plum:#4b0f40; --plum2:#6d1a5d; --mag:#c2185b; --saffron:#f29a1d; --saffron-soft:#fff1dc;
+  --good:#1f8a4c; --good-soft:#e3f4ea; --bad:#c62828; --bad-soft:#fde7e7; --chip:#f3eef2;
+  --bar1:#6d1a5d; --bar2:#c9a2bf; --grid:#ecdfe8;
+  --f-d:"Baloo 2","Trebuchet MS",system-ui,sans-serif; --f-b:"Mukta","Segoe UI",system-ui,sans-serif; --f-m:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#170a14; --panel:#22111e; --ink:#f6eaf2; --ink2:#d1bccb; --muted:#a58e9f; --line:#3a2335;
+  --plum:#2a0824; --plum2:#a2448f; --mag:#ff5c95; --saffron:#ffb347; --saffron-soft:#3a2a12;
+  --good:#5fd08f; --good-soft:#123222; --bad:#ff7a7a; --bad-soft:#3a1616; --chip:#2e1a29;
+  --bar1:#d77bc4; --bar2:#6b3d61; --grid:#352030; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#170a14; --panel:#22111e; --ink:#f6eaf2; --ink2:#d1bccb; --muted:#a58e9f; --line:#3a2335;
+  --plum:#2a0824; --plum2:#a2448f; --mag:#ff5c95; --saffron:#ffb347; --saffron-soft:#3a2a12;
+  --good:#5fd08f; --good-soft:#123222; --bad:#ff7a7a; --bad-soft:#3a1616; --chip:#2e1a29;
+  --bar1:#d77bc4; --bar2:#6b3d61; --grid:#352030; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-b);font-size:16px;line-height:1.5;margin:0}
+button{font-family:inherit}
+.wrap{max-width:1220px;margin:0 auto;padding-inline:20px;padding-block:0 48px}
+header.top{background:#4b0f40;color:#fff;padding-inline:20px;padding-block:18px 0}
+header.top .inner{max-width:1220px;margin:0 auto}
+.eyebrow{font-family:var(--f-m);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:#f5c9e6}
+h1{font-family:var(--f-d);font-weight:800;font-size:clamp(28px,4vw,42px);line-height:1.05;margin:6px 0 4px}
+h1 span{color:#f29a1d}
+.sub{color:#ead6e4;max-width:78ch;margin:0 0 12px}
+.concept{display:inline-block;font-size:12.5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:2px 12px;margin-bottom:14px}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs a{color:#ead6e4;text-decoration:none;font-family:var(--f-d);font-weight:700;font-size:16px;padding:9px 16px 7px;border-radius:12px 12px 0 0}
+nav.tabs a[aria-current="page"]{background:var(--bg);color:var(--ink)}
+nav.tabs a:focus-visible{outline:2px solid #f29a1d;outline-offset:2px}
+section.view{padding-top:22px}
+h2{font-family:var(--f-d);font-weight:800;font-size:26px;line-height:1.15;margin:0 0 6px}
+h3{font-family:var(--f-d);font-weight:700;font-size:19px;margin:0 0 6px}
+p{margin:0}
+.lede{color:var(--ink2);max-width:76ch;margin-bottom:16px}
+.mono{font-family:var(--f-m)}
+/* journey */
+.jgrid{display:grid;grid-template-columns:minmax(0,1fr) 384px minmax(0,1.15fr);gap:22px;align-items:start}
+@media (max-width:1060px){.jgrid{grid-template-columns:1fr}.phonecol{order:-1}}
+.steps{display:flex;flex-direction:column;gap:4px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:10px;text-align:left;background:transparent;border:1px solid transparent;border-radius:12px;padding:9px 10px;color:var(--ink);cursor:pointer}
+.step:hover{background:var(--panel);border-color:var(--line)}
+.step[aria-current="step"]{background:var(--panel);border-color:var(--plum2)}
+.step .n{font-family:var(--f-m);font-size:12px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--chip);color:var(--ink);font-weight:600}
+.step[aria-current="step"] .n{background:var(--saffron);color:#24101f}
+.step b{font-family:var(--f-d);font-weight:700;font-size:15.5px;display:block;line-height:1.2}
+.step span{font-size:13.5px;color:var(--ink2)}
+.step:focus-visible{outline:2px solid var(--saffron)}
+.modebar{display:flex;justify-content:center;margin-bottom:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.seg button{font-weight:700;font-size:14.5px;padding:9px 16px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"].today{background:var(--bad-soft);color:var(--bad)}
+.seg button[aria-pressed="true"].mm{background:var(--plum2);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.phone{width:372px;max-width:100%;margin:0 auto;border-radius:40px;background:#111;padding:12px;box-shadow:0 20px 50px rgba(40,5,30,.25)}
+.screen{background:#fff;color:#1d1b1c;border-radius:30px;height:720px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-size:14px}
+.sbar{display:flex;justify-content:space-between;font:600 12px var(--f-m);padding:10px 20px 4px;color:#333}
+.scr{flex:1;overflow-y:auto;overflow-x:hidden}
+.scr::-webkit-scrollbar{width:0}
+.ribbon{font:600 10.5px var(--f-m);letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;text-align:center}
+.ribbon.today{background:#fde7e7;color:#a11}
+.ribbon.mm{background:#4b0f40;color:#f29a1d}
+.ah{padding:8px 14px 10px;border-bottom:1px solid #eee}
+.row{display:flex;align-items:center;gap:8px}
+.wm{font-family:var(--f-d);font-weight:800;font-size:21px;color:#6d1a5d}
+.wm small{font-family:var(--f-b);font-size:10px;color:#999;font-weight:500;margin-left:4px}
+.search{margin-top:8px;display:flex;align-items:center;gap:8px;border:1.5px solid #d8c8d4;border-radius:10px;padding:8px 10px;color:#777;background:#fff;font-size:13.5px}
+.search b{color:#1d1b1c;font-weight:600}
+.navchips{display:flex;gap:6px;overflow-x:auto;padding:8px 14px 2px}
+.navchips::-webkit-scrollbar{height:0}
+.nc{flex:none;font-size:12.5px;padding:3px 10px;border-radius:999px;background:#f3eef2;color:#4b0f40;font-weight:600}
+.nc.hl{outline:2px solid #c62828}
+.sect{padding:10px 14px 4px;font-family:var(--f-d);font-weight:700;font-size:16px}
+.sect small{font-family:var(--f-b);font-weight:500;color:#888;font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:6px 14px 14px}
+.card{border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff;text-align:left;padding:0;color:inherit;font:inherit;cursor:default}
+.card .img{aspect-ratio:1.15/1;display:grid;place-items:center;position:relative;background:#f6f1f4}
+.card .img svg{width:54%;height:54%}
+.card .meta{padding:6px 8px 8px;font-size:12px;line-height:1.3}
+.card .ttl{color:#555;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.card .ttl.clear{color:#1d1b1c;font-weight:600}
+.card .pr{font-weight:700;font-size:14px;color:#1d1b1c;margin-top:2px}
+.rtp{display:inline-block;background:#1f8a4c;color:#fff;border-radius:999px;padding:0 6px;font-weight:600;font-size:10.5px}
+.rtp.low{background:#b26a00}
+.facts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.fact{font-size:10px;background:#e9f6ee;color:#14542f;border-radius:5px;padding:1px 5px;font-weight:600}
+.fact.warn{background:#fff1dc;color:#8a5200}
+.fit-b{position:absolute;right:5px;bottom:5px;background:#1f8a4c;color:#fff;font:600 9.5px var(--f-b);padding:3px 6px;border-radius:6px}
+.btnp{display:block;width:calc(100% - 28px);margin:6px 14px 14px;background:#6d1a5d;color:#fff;border:0;border-radius:10px;padding:12px;font-weight:700;font-size:14.5px;cursor:pointer}
+.btnp.alt{background:#fff;color:#6d1a5d;border:1.5px solid #6d1a5d}
+.btnp:focus-visible{outline:2px solid #f29a1d;outline-offset:2px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px}
+.mtile{border:1.5px solid #e8dce5;border-radius:12px;padding:10px;text-align:left;background:#fff;cursor:pointer;color:#1d1b1c}
+.mtile b{display:block;font-family:var(--f-d);font-size:15px}
+.mtile span{font-size:11.5px;color:#777}
+.mtile.on{border-color:#6d1a5d;background:#faf3f9}
+.mtile:focus-visible{outline:2px solid #f29a1d}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:4px 14px}
+.chipb{border:1.5px solid #e2d4de;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;color:#1d1b1c}
+.chipb.on{background:#6d1a5d;border-color:#6d1a5d;color:#fff;font-weight:600}
+.chipb:focus-visible{outline:2px solid #f29a1d}
+.qtitle{padding:14px 14px 4px;font-family:var(--f-d);font-weight:800;font-size:21px;line-height:1.15}
+.qsub{padding:0 14px 6px;color:#666;font-size:13px}
+.setcard{margin:8px 14px;border:1px solid #eee;border-radius:14px;overflow:hidden}
+.seth{background:#4b0f40;color:#fff;padding:9px 12px;display:flex;justify-content:space-between;align-items:center}
+.seth b{font-family:var(--f-d);font-size:15.5px}
+.seth span{font:600 13px var(--f-m);color:#f29a1d}
+.setrow{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid #f1eaef;font-size:12.5px}
+.setrow .th{width:44px;height:44px;border-radius:8px;background:#f6f1f4;display:grid;place-items:center}
+.setrow .th svg{width:30px;height:30px}
+.setrow b{font-weight:600;display:block;color:#1d1b1c}
+.setrow small{color:#777}
+.ladder{display:flex;gap:6px;padding:6px 14px 2px}
+.ladder button{flex:1;border:1.5px solid #e2d4de;background:#fff;border-radius:10px;padding:6px 4px;font-size:12px;cursor:pointer;color:#1d1b1c}
+.ladder button.on{border-color:#6d1a5d;background:#faf3f9;font-weight:700}
+.pdp-img{height:230px;display:grid;place-items:center;background:#f6f1f4;position:relative}
+.pdp-img svg{width:48%}
+.pd{padding:10px 14px}
+.pd h4{margin:0;font-weight:600;font-size:15px;line-height:1.3}
+.pd .big{font-size:22px;font-weight:700;margin-top:4px}
+.ktab{margin:8px 14px;border:1px solid #eee;border-radius:12px;overflow:hidden;font-size:12.5px}
+.ktab div{display:grid;grid-template-columns:110px 1fr;padding:6px 10px;border-top:1px solid #f3eef2}
+.ktab div:first-child{border-top:0}
+.ktab span{color:#777}
+.badge-line{margin:6px 14px;display:flex;gap:8px;align-items:center;background:#fff6e6;border:1px solid #f6d29a;border-radius:10px;padding:8px 10px;font-size:12.5px}
+.badge-line b{color:#6d1a5d}
+.block{margin:10px 14px;border:1px solid #eee;border-radius:12px;padding:10px 12px}
+.block h5{margin:0 0 6px;font-size:13.5px;font-family:var(--f-d)}
+.opt{display:flex;justify-content:space-between;align-items:center;border:1.5px solid #e5e5e5;border-radius:10px;padding:8px 10px;margin-top:6px;font-size:12.5px;background:#fff;width:100%;color:#1d1b1c;text-align:left;cursor:pointer}
+.opt.on{border-color:#6d1a5d;background:#faf3f9}
+.opt:focus-visible{outline:2px solid #f29a1d}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12.5px;padding-bottom:9px}
+.tl li::before{content:"";width:12px;height:12px;border-radius:50%;background:#1f8a4c;margin-top:4px}
+.tl li.p::before{background:#ddd}
+.tl li.w::before{background:#e0a100}
+.tl small{color:#777;display:block;font-size:11px}
+.packshot{margin:6px 0 4px;border-radius:10px;overflow:hidden;border:1px solid #e5e5e5;position:relative;background:#efe9e2;height:150px;display:grid;place-items:center}
+.packshot svg{width:44%}
+.stamp{position:absolute;left:8px;top:8px;background:#1f8a4c;color:#fff;font:700 10.5px var(--f-m);padding:3px 7px;border-radius:6px}
+.checks{display:grid;gap:3px;font-size:12px;margin-top:4px}
+.checks span::before{content:"✓ ";color:#1f8a4c;font-weight:800}
+.scene{margin:12px 14px;border-radius:16px;background:#fbf4ea;border:1px solid #f0dfc6;padding:14px}
+.scene .who{font-family:var(--f-d);font-weight:700;font-size:15px}
+.bub{max-width:88%;border-radius:12px;padding:8px 11px;font-size:13px;margin-top:8px;background:#fff;border:1px solid #eee}
+.bub.me{margin-left:auto;background:#e9f6ee;border-color:#cfe9d9}
+.standee{margin:12px auto 4px;width:190px;border-radius:14px;background:#4b0f40;color:#fff;text-align:center;padding:12px}
+.standee b{font-family:var(--f-d);font-size:15px;display:block}
+.standee small{color:#f5c9e6;font-size:11px}
+.qr{width:110px;height:110px;margin:8px auto;background:#fff;border-radius:8px;padding:6px}
+.toast{position:absolute;left:12px;right:12px;bottom:16px;background:#1d1b1c;color:#fff;border-radius:10px;padding:10px 12px;font-size:12.5px;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.okbig{text-align:center;padding:22px 16px 6px}
+.okbig .c{width:58px;height:58px;border-radius:50%;background:#1f8a4c;color:#fff;display:grid;place-items:center;font-size:28px;margin:0 auto 8px}
+.okbig h4{font-family:var(--f-d);font-size:19px;margin:0}
+.okbig p{font-size:12.5px;color:#555;margin-top:4px}
+.dim{opacity:.55}
+.ctrls{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.btn{font-weight:600;font-size:15px;border-radius:10px;padding:10px 16px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--plum2);border-color:var(--plum2);color:#fff}
+.btn:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:default}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.note .feat{display:inline-block;font:600 11px var(--f-m);letter-spacing:.06em;text-transform:uppercase;background:var(--saffron-soft);color:var(--ink);border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.cmp{display:grid;gap:10px;margin-top:10px}
+.cmp div{border-radius:10px;padding:10px 12px;font-size:14.5px}
+.cmp .t{background:var(--bad-soft)}
+.cmp .m{background:var(--good-soft)}
+.cmp small{display:block;font-family:var(--f-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:2px}
+.src{font-size:12px;color:var(--muted);margin-top:10px}
+.kpi-chip{display:inline-block;margin-top:10px;font-family:var(--f-m);font-size:12px;background:var(--chip);padding:4px 10px;border-radius:999px}
+/* behind the scenes */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:920px){.two{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.pick button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13.5px;cursor:pointer}
+.pick button[aria-pressed="true"]{background:var(--plum2);border-color:var(--plum2);color:#fff}
+.pick button:focus-visible{outline:2px solid var(--saffron)}
+.pipe{display:grid;gap:8px}
+.ps{border:1px solid var(--line);border-radius:12px;padding:10px 12px;opacity:.35;transition:opacity .3s}
+.ps.on{opacity:1}
+.ps h4{margin:0 0 4px;font-family:var(--f-d);font-size:15.5px}
+.ps .k{font-family:var(--f-m);font-size:12.5px;color:var(--ink2);white-space:pre-wrap;word-break:break-word}
+.conf{display:inline-block;font-family:var(--f-m);font-size:11.5px;border-radius:6px;padding:0 6px;margin-left:4px}
+.conf.ok{background:var(--good-soft);color:var(--good)}
+.conf.no{background:var(--bad-soft);color:var(--bad)}
+.out{border-radius:12px;padding:12px;background:var(--good-soft);margin-top:4px}
+.out .before{text-decoration:line-through;color:var(--muted);font-size:14px}
+.out .after{font-weight:700;font-size:16.5px}
+.matchbox{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.matchbox figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.matchbox figure div{height:130px;display:grid;place-items:center;background:#f6f1f4}
+.matchbox figure div svg{width:42%}
+.matchbox figcaption{font-size:12.5px;padding:6px 8px;color:var(--ink2)}
+.verdict{border-radius:12px;padding:10px 12px;font-weight:600}
+.verdict.ok{background:var(--good-soft);color:var(--good)}
+.verdict.no{background:var(--bad-soft);color:var(--bad)}
+.scale{margin-top:20px}
+.scale ul{margin:8px 0 0;padding-left:18px;color:var(--ink2)}
+.scale li{margin-bottom:4px}
+/* shop */
+.shopgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0}
+@media (max-width:820px){.shopgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi small{font-family:var(--f-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.kpi b{display:block;font-family:var(--f-d);font-weight:800;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums;margin-top:4px}
+.kpi span{font-size:13px;color:var(--ink2)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);font-size:14px}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:var(--f-m);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);font-weight:500}
+tr.sec td{font-family:var(--f-m);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);background:var(--bg)}
+tr.tot td{font-weight:700}
+td.neg{color:var(--bad)} td.pos{color:var(--good)}
+.pill{font-family:var(--f-m);font-size:11px;border-radius:999px;padding:2px 8px;font-weight:600}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.hold{background:var(--saffron-soft);color:var(--ink)}
+/* business */
+.controls{display:flex;flex-wrap:wrap;gap:16px 26px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.ctl label{display:block;font-size:13px;color:var(--ink2);margin-bottom:4px}
+.ctl output{font-family:var(--f-m);font-size:13px;color:var(--ink);margin-left:6px}
+.ctl input[type=range]{width:170px;accent-color:var(--plum2)}
+.seg3{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg3 button{font-weight:600;font-size:14px;padding:8px 14px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg3 button[aria-pressed="true"]{background:var(--plum2);color:#fff}
+.seg3 button:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media (max-width:860px){.charts{grid-template-columns:1fr}}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 14px 8px;position:relative;min-width:0}
+.chart p.cap{font-size:13px;color:var(--ink2);margin-bottom:6px}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart text{fill:var(--ink2);font-family:var(--f-m);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;border-radius:8px;padding:6px 9px;white-space:nowrap;opacity:0;transition:opacity .12s;font-family:var(--f-m)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.foot{margin-top:22px;font-size:12.5px;color:var(--muted);max-width:100ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.sec2{margin-top:26px}
+.atbl td:last-child,.atbl th:last-child{text-align:left;font-size:12.5px;color:var(--ink2);min-width:260px}
+.atbl td{font-size:13.5px}
+.links a{color:var(--mag)}
+.small{font-size:13px;color:var(--ink2)}
+</style>
+<style>img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<header class="top"><div class="inner">
+  <div class="eyebrow">Meesho DICE Challenge 3.0 · Neeraj Wankhede, Team FireFlux, IIT Bombay · Model date 4 Oct 2026</div>
+  <h1>Mission Mode <span>Financial Model</span></h1>
+  <p class="sub">Incremental sales, costs, profit and payback from Mission Start, Clear Listings, Pack Proof and Dukaan QR. Pilot January 2027 in Rajasthan + MP; scale from FY28. Every number recalculates when you change the scenario or a lever. Identical to the Excel file submitted with the deck.</p>
+  <span class="concept">Student case model. Reported Meesho figures are cited; every other driver is my estimate and labelled as such.</span>
+  <div style="height:14px"></div>
+</div></header>
+<div class="wrap"><section class="view" id="v-business">
+  <div class="controls">
+    <div class="ctl"><label id="scl">Scenario</label><div class="seg3" role="group" aria-labelledby="scl"><button type="button" data-s="bear" aria-pressed="false">Bear</button><button type="button" data-s="base" aria-pressed="true">Base</button><button type="button" data-s="bull" aria-pressed="false">Bull</button></div></div>
+    <div class="ctl"><label for="r-comm">Shop commission<output id="o-comm">1.5%</output></label><input id="r-comm" type="range" min="0.5" max="5" step="0.5" value="1.5"></div>
+    <div class="ctl"><label for="r-bonus">First-order bonus per buyer<output id="o-bonus">₹50</output></label><input id="r-bonus" type="range" min="0" max="150" step="10" value="50"></div>
+    <div class="ctl"><label for="r-mkt">Marketing spend<output id="o-mkt">100%</output></label><input id="r-mkt" type="range" min="50" max="150" step="10" value="100"></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Payback</small><b id="k-pay">—</b><span id="k-pay2"></span></div>
+    <div class="kpi"><small>Peak investment</small><b id="k-peak">—</b><span id="k-peak2"></span></div>
+    <div class="kpi"><small>FY31 incremental sales</small><b id="k-nmv">—</b><span id="k-nmv2"></span></div>
+    <div class="kpi"><small>FY31 profit impact</small><b id="k-e">—</b><span id="k-e2"></span></div>
+  </div>
+  <div class="charts">
+    <div class="chart" id="c1"><h3>Incremental NMV</h3><p class="cap">₹ crore per year</p><svg id="svg1" viewBox="0 0 460 240" role="img" aria-label="Incremental NMV by year"></svg><div class="tip" id="tip1"></div></div>
+    <div class="chart" id="c2"><h3>Cumulative profit impact</h3><p class="cap">₹ crore, after every Mission Mode cost</p><svg id="svg2" viewBox="0 0 460 240" role="img" aria-label="Cumulative EBITDA impact"></svg><div class="tip" id="tip2"></div></div>
+  </div>
+  <h2 class="sec2">Profit and loss (incremental, ₹ crore)</h2>
+  <div class="tbl-wrap"><table id="pl"></table></div>
+  <h2 class="sec2">Scenario comparison</h2>
+  <div class="tbl-wrap"><table id="sc"></table></div>
+  <h2 class="sec2">Unit economics</h2>
+  <div class="tbl-wrap"><table id="ue"></table></div>
+  <h2 class="sec2">Assumptions</h2>
+  <p class="small" style="margin-bottom:8px">Inputs by year. FY27 covers January–March 2027 only. Scenario multipliers: Bear 0.6× buyers and extra orders; Bull 1.25× buyers, 1.2× extra orders.</p>
+  <div class="tbl-wrap"><table class="atbl" id="as"></table></div>
+  <h2 class="sec2">Constants</h2>
+  <div class="tbl-wrap"><table class="atbl"><thead><tr><th>Constant</th><th>Value</th><th>Basis</th></tr></thead><tbody>
+   <tr><td>Revenue ÷ NMV (take rate)</td><td>30.4%</td><td>Meesho FY26: revenue ₹12,626 cr ÷ NMV ₹41,560 cr (reported)</td></tr>
+   <tr><td>Contribution margin</td><td>4.6% of NMV</td><td>Meesho Q1 FY27 shareholder letter (reported)</td></tr>
+   <tr><td>Shop commission</td><td>1.5% of referred NMV, 90 days</td><td>Proposal; adjustable above</td></tr>
+   <tr><td>First-order bonus to shop</td><td>₹50 per new referred buyer</td><td>Proposal: at 1.5% alone a shop earns only ~₹1,000–2,000 a year</td></tr>
+   <tr><td>Pack Proof check</td><td>₹0.30 per check</td><td>Estimate: one compressed photo + one small vision-model inference</td></tr>
+   <tr><td>Loaded cost per FTE</td><td>₹45 lakh a year</td><td>Estimate</td></tr>
+   <tr><td>Shop onboarding</td><td>₹2,000 per new shop</td><td>Estimate: visit, training, QR standee</td></tr>
+   <tr><td>Existing-buyer AOV</td><td>₹290</td><td>Estimate; platform AOV ₹265 in FY26 (reported)</td></tr>
+  </tbody></table></div>
+  <h2 class="sec2">Reality checks</h2>
+  <ul class="small">
+   <li>Meesho has 274M annual transacting users (Q1 FY27); 54.22% of FY25 consumers were women, so roughly 125M male buyers. 23.5M new active male buyers by FY31 is about 19% of that base.</li>
+   <li>Meesho added about 62M net annual buyers in the last year (274M at +29% YoY). Mission Start's ~5–6M extra male first orders a year is about a 20% lift on the ~28M men among them.</li>
+   <li>1.5 lakh Dukaan QR shops by FY31 is about 3.7% of Kirana Club's 4.1M retailers. Amazon's Local Shops programme passed 1 lakh stores.</li>
+   <li>Peak investment of ~₹35 cr is about 0.5% of Meesho's ₹6,521 cr cash. FY31 profit impact is about 1.2% of FY26 revenue.</li>
+   <li>Not counted (upside): fewer wrong-item claims, higher AOV from the mission price ladder, Vaani conversion on mission sessions, seller ad spend on mission shelves.</li>
+  </ul>
+  <h2 class="sec2">Sources</h2>
+  <ul class="small links">
+   <li><a href="https://static-assets.meesho.com/investor-relations/1784806298911/Q1ShareholdersLetter.pdf">Meesho Q1 FY27 shareholder letter</a>: 274M ATU, 10.3 orders/user, contribution margin 4.6%, cash ₹6,521 cr</li>
+   <li><a href="https://www.medianama.com/2026/05/223-meesho-posts-rs-166-crore-loss-q4-fy26-revenue-jumps-47/">Medianama, Meesho FY26 results</a>: revenue ₹12,626 cr, NMV ₹41,560 cr, AOV ₹265</li>
+   <li><a href="https://www.chittorgarh.net/reports/ipo_notes/meesho-ipo-note-axis-capital.pdf">Axis Capital IPO note</a>: 54.22% of FY25 consumers were women</li>
+   <li><a href="https://www.business-standard.com/companies/news/meesho-acquires-kirana-club-in-202-crore-deal-to-expand-grocery-presence-126061201034_1.html">Business Standard, Meesho–Kirana Club</a>: 4.1M registered retailers</li>
+   <li><a href="https://press.aboutamazon.in/news-releases/news-release-details/amazonin-crosses-10-lakh-sellers-milestone-over-1-lakh-local">Amazon India press release</a>: 1 lakh+ stores on Local Shops on Amazon</li>
+   <li><a href="https://medium.com/meesho-tech/we-automated-attribute-tagging-using-deep-learning-models-part-1-b5bc455d2305">Meesho Tech, automated attribute tagging</a>: basis for Clear Listings feasibility</li>
+  </ul>
+</section></div>
+<script>
+const $=s=>document.querySelector(s);
+/* ---------- business model (mirrors Excel) ---------- */
+const Y=['FY27 Q4','FY28','FY29','FY30','FY31'];
+const A={shops:[2000,20000,60000,100000,150000],bps:[12.5,50,50,50,50],ms:[0.3,4,9,13,16],on:[1.5,5,6,7,7.5],aovn:[300,310,320,330,340],reach:[5,25,50,70,80],extra:[0.05,0.2,0.4,0.5,0.5],aovx:290,take:0.304,cm:0.046,checks:[10,100,250,400,450],cc:0.30,cl:[3,1,1,1,1],fte:[6,8,12,15,15],ftec:0.45,frac:[0.25,1,1,1,1],onb:2000,mkt:[15,40,60,75,80]};
+const SC={bear:[0.6,0.6],base:[1,1],bull:[1.25,1.2]};
+const B={s:'base',comm:1.5,bonus:50,mkt:100};
+function model(){const [bm,em]=SC[B.s];let cum=0,prev=0;const before=[0,3,15,27,39],span=[3,12,12,12,12];let pay=null;const out=[];
+ for(let i=0;i<5;i++){const dk=A.shops[i]*A.bps[i]/1e6*bm,ms=A.ms[i]*bm,nb=dk+ms;const nmvN=nb*A.on[i]*A.aovn[i]/10,nmvD=dk*A.on[i]*A.aovn[i]/10,nmvX=A.reach[i]*A.extra[i]*em*A.aovx/10,nmv=nmvN+nmvX;
+  const rev=nmv*A.take,cm=nmv*A.cm,comm=nmvD*B.comm/100,bonus=dk*B.bonus/10,pack=A.checks[i]*A.cc/10,squad=A.fte[i]*A.ftec*A.frac[i],onb=(A.shops[i]-prev)*A.onb/1e7,mk=A.mkt[i]*B.mkt/100;prev=A.shops[i];
+  const cost=comm+bonus+pack+A.cl[i]+squad+onb+mk,e=cm-cost,pc=cum;cum+=e;
+  if(pay===null){if(i===0&&cum>=0)pay=3;else if(i>0&&pc<0&&cum>=0)pay=before[i]+(-pc/e)*span[i]}
+  out.push({y:Y[i],dk,ms,nb,nmv,rev,cm,comm,bonus,pack,cl:A.cl[i],squad,onb,mk,cost,e,cum})}
+ return {r:out,pay}}
+const fmt=(n,d=0)=>{const a=Math.abs(n);if(a<0.05)return '0';const s=a.toLocaleString('en-IN',{maximumFractionDigits:d,minimumFractionDigits:d});return n<0?'('+s+')':s};
+function renderBiz(){
+ const {r,pay}=model();
+ if(pay!==null){const d=new Date(2027,0,1);d.setMonth(d.getMonth()+Math.ceil(pay));$('#k-pay').textContent=Math.round(pay)+' months';$('#k-pay2').textContent='from Jan 2027 pilot · around '+d.toLocaleString('en-IN',{month:'short',year:'numeric'})}else{$('#k-pay').textContent='Beyond FY31';$('#k-pay2').textContent='the pilot kill rule would stop spend'}
+ const peak=Math.max(0,-Math.min(...r.map(x=>x.cum)));$('#k-peak').textContent='₹'+fmt(peak)+' cr';$('#k-peak2').textContent=(peak/6521*100).toFixed(1)+'% of Meesho\'s ₹6,521 cr cash';
+ $('#k-nmv').textContent='₹'+fmt(r[4].nmv)+' cr';$('#k-nmv2').textContent=r[4].nb.toFixed(1)+'M new active male buyers';
+ $('#k-e').textContent='₹'+fmt(r[4].e)+' cr';$('#k-e2').textContent=(r[4].e/12626*100).toFixed(1)+'% of Meesho FY26 revenue';
+ const row=(l,f,cls='',d=0)=>`<tr class="${cls}"><td>${l}</td>${r.map(x=>{const v=f(x);return `<td class="${cls.includes('tot')?(v<0?'neg':'pos'):''}">${fmt(v,d)}</td>`}).join('')}</tr>`;
+ $('#pl').innerHTML=`<thead><tr><th>₹ crore</th>${Y.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>
+ <tr class="sec"><td colspan="6">Buyers and sales</td></tr>${row('New male buyers via Dukaan QR (M)',x=>x.dk,'',2)}${row('New male buyers via Mission Start (M)',x=>x.ms,'',1)}${row('Incremental NMV',x=>x.nmv)}${row('Incremental revenue (30.4% of NMV)',x=>x.rev)}${row('Incremental contribution (4.6% of NMV)',x=>x.cm,'',1)}
+ <tr class="sec"><td colspan="6">Costs</td></tr>${row(`Shop commission (${B.comm}%)`,x=>-x.comm,'',1)}${row(`First-order bonus to shops (₹${B.bonus})`,x=>-x.bonus,'',1)}${row('Pack Proof checks',x=>-x.pack,'',1)}${row('Clear Listings compute',x=>-x.cl,'',1)}${row('Product & tech squad',x=>-x.squad,'',1)}${row('Shop onboarding',x=>-x.onb,'',1)}${row('Marketing and content',x=>-x.mk,'',1)}
+ <tr class="sec"><td colspan="6">Profit</td></tr>${row('Incremental EBITDA impact',x=>x.e,'tot',1)}${row('Cumulative',x=>x.cum,'tot',1)}</tbody>`;
+ bars(r);line(r);
+}
+function ticks(max){const st=Math.pow(10,Math.floor(Math.log10(max)));const m=max/st;const s=(m<=2?.5:m<=5?1:2)*st;const o=[];for(let v=0;v<=max+1e-9;v+=s)o.push(v);if(o[o.length-1]<max)o.push(o[o.length-1]+s);return o}
+function bars(r){const W=460,H=240,L=50,R=10,T=14,Bt=28;const tk=ticks(Math.max(...r.map(x=>x.nmv)));const top=tk[tk.length-1];const y=v=>T+(H-T-Bt)*(1-v/top);const bw=(W-L-R)/r.length;let s='';
+ tk.forEach(t=>{s+=`<line x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${fmt(t)}</text>`});
+ r.forEach((x,i)=>{const cx=L+bw*i+bw/2,w=bw*.52,h=Math.max(y(0)-y(x.nmv),1);s+=`<path d="M${cx-w/2},${y(0)} v${-Math.max(h-4,0)} q0,-4 4,-4 h${w-8} q4,0 4,4 v${Math.max(h-4,0)} z" fill="var(--bar1)"/><text x="${cx}" y="${H-8}" text-anchor="middle">${x.y}</text><rect class="hit" x="${cx-bw/2}" y="${T}" width="${bw}" height="${H-T-Bt}" fill="transparent" data-i="${i}"/>`});
+ const l=r[4];s+=`<text x="${L+bw*4.5}" y="${y(l.nmv)-7}" text-anchor="middle" style="fill:var(--ink);font-weight:600">₹${fmt(l.nmv)}</text>`;
+ $('#svg1').innerHTML=s;hover('#svg1','#tip1',r,x=>`${x.y}: ₹${fmt(x.nmv)} cr NMV`)}
+function line(r){const W=460,H=240,L=50,R=16,T=16,Bt=28;const v=r.map(x=>x.cum);let mn=Math.min(0,...v),mx=Math.max(0,...v);const pad=(mx-mn)*.12||10;mn-=pad;mx+=pad;
+ const x=i=>L+(W-L-R)*i/(r.length-1),y=q=>T+(H-T-Bt)*(mx-q)/(mx-mn);let s='';const rng=mx-mn;const st=Math.pow(10,Math.floor(Math.log10(rng)));const step=rng/st>5?st:rng/st>2?st/2:st/5;
+ for(let q=Math.ceil(mn/step)*step;q<=mx;q+=step){s+=`<line x1="${L}" x2="${W-R}" y1="${y(q)}" y2="${y(q)}" stroke="var(--grid)"/><text x="${L-6}" y="${y(q)+4}" text-anchor="end">${fmt(q)}</text>`}
+ s+=`<line x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink2)"/>`;
+ const pts=r.map((d,i)=>`${x(i)},${y(d.cum)}`).join(' ');
+ s+=`<polygon points="${x(0)},${y(0)} ${pts} ${x(4)},${y(0)}" fill="var(--bar1)" opacity=".12"/><polyline points="${pts}" fill="none" stroke="var(--bar1)" stroke-width="2"/>`;
+ r.forEach((d,i)=>{s+=`<circle cx="${x(i)}" cy="${y(d.cum)}" r="${i===4?5:3.5}" fill="${d.cum<0?'var(--bad)':'var(--good)'}" stroke="var(--panel)" stroke-width="2"/><text x="${x(i)}" y="${H-8}" text-anchor="middle">${d.y}</text><rect class="hit" x="${x(i)-40}" y="${T}" width="80" height="${H-T-Bt}" fill="transparent" data-i="${i}"/>`});
+ s+=`<text x="${x(4)-8}" y="${y(r[4].cum)-10}" text-anchor="end" style="fill:var(--ink);font-weight:600">₹${fmt(r[4].cum)}</text>`;
+ $('#svg2').innerHTML=s;hover('#svg2','#tip2',r,d=>`${d.y}: year ₹${fmt(d.e,1)} cr · cumulative ₹${fmt(d.cum,1)} cr`)}
+function hover(sv,tp,r,txt){const svg=$(sv),tip=$(tp),box=svg.closest('.chart');svg.querySelectorAll('.hit').forEach(h=>{h.addEventListener('mousemove',ev=>{const b=box.getBoundingClientRect();tip.textContent=txt(r[+h.dataset.i]);tip.style.opacity=1;let lx=ev.clientX-b.left+12;if(lx>b.width-tip.offsetWidth-8)lx=ev.clientX-b.left-tip.offsetWidth-12;tip.style.left=lx+'px';tip.style.top=(ev.clientY-b.top-34)+'px'});h.addEventListener('mouseleave',()=>tip.style.opacity=0)})}
+document.querySelectorAll('.seg3 button').forEach(b=>b.addEventListener('click',()=>{B.s=b.dataset.s;document.querySelectorAll('.seg3 button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderBiz()}));
+[['comm',v=>v+'%'],['bonus',v=>'₹'+v],['mkt',v=>v+'%']].forEach(([k,f])=>{const el=$('#r-'+k);el.addEventListener('input',()=>{B[k]=+el.value;$('#o-'+k).textContent=f(+el.value);renderBiz()})});
+
+
+const DRV=[['Dukaan QR active shops','shops',0,'Pilot 2,000 shops; ~3.7% of Kirana Club retailers by FY31 (estimate)'],['New male buyers per shop per year','bps',1,'About one a week; FY27 is a quarter (estimate)'],['Mission Start incremental active male buyers (M)','ms',1,'Retained stock from ~5–6M extra first orders a year (estimate)'],['Orders per new buyer per year','on',1,'Below platform 10.3 (reported); FY27 is a quarter (estimate)'],['AOV of new buyers (₹)','aovn',0,'Above platform ₹265 as missions bundle items (estimate)'],['Existing male buyers reached (M)','reach',0,'Of ~125M male buyers (estimate)'],['Extra orders per reached buyer per year','extra',2,'+2–5% on 10.3 orders (estimate)'],['Pack Proof checks (M)','checks',0,'Orders ≥ ₹499, high-claim categories, new sellers (estimate)'],['Clear Listings compute (₹ cr)','cl',0,'One-time batch, then refresh (estimate)'],['Squad (FTE)','fte',0,'6 in pilot → 15 at scale (estimate)'],['Marketing and content (₹ cr)','mkt',0,'For scale: Meesho FY25 ad spend ₹643.5 cr (estimate)']];
+$('#as').innerHTML='<thead><tr><th>Driver</th>'+Y.map(y=>'<th>'+y+'</th>').join('')+'<th>Basis</th></tr></thead><tbody>'+DRV.map(([n,k,d,b])=>'<tr><td>'+n+'</td>'+A[k].map(v=>'<td>'+v.toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d})+'</td>').join('')+'<td>'+b+'</td></tr>').join('')+'</tbody>';
+function extra(){
+ const keep=B.s;const res={};['bear','base','bull'].forEach(k=>{B.s=k;res[k]=model()});B.s=keep;
+ const pay=m=>m.pay===null?'Beyond FY31':Math.round(m.pay)+' months';
+ $('#sc').innerHTML='<thead><tr><th>Metric</th><th>Bear</th><th>Base</th><th>Bull</th></tr></thead><tbody>'+
+ [['Payback from Jan 2027',m=>pay(m)],['Peak investment',m=>'₹'+fmt(Math.max(0,-Math.min(...m.r.map(x=>x.cum))))+' cr'],['FY31 incremental NMV',m=>'₹'+fmt(m.r[4].nmv)+' cr'],['FY31 new active male buyers',m=>m.r[4].nb.toFixed(1)+'M'],['FY31 profit impact',m=>'₹'+fmt(m.r[4].e)+' cr'],['Cumulative by FY31',m=>'₹'+fmt(m.r[4].cum)+' cr']].map(([l,f])=>'<tr><td>'+l+'</td>'+['bear','base','bull'].map(k=>'<td>'+f(res[k])+'</td>').join('')+'</tr>').join('')+'</tbody>';
+ const r=model().r;
+ $('#ue').innerHTML='<thead><tr><th>₹ per unit</th>'+Y.map(y=>'<th>'+y+'</th>').join('')+'</tr></thead><tbody>'+
+ [['Cost per new active male buyer',x=>x.cost*10/x.nb],['Contribution per new buyer per year',x=>(x.nb*A.on[r.indexOf(x)]*A.aovn[r.indexOf(x)]/10)*A.cm*10/x.nb],['Shop earnings per active shop per year',x=>(x.comm+x.bonus)*1e7/A.shops[r.indexOf(x)]]].map(([l,f])=>'<tr><td>'+l+'</td>'+r.map(x=>'<td>₹'+fmt(f(x))+'</td>').join('')+'</tr>').join('')+'</tbody>';
+}
+const _rb=renderBiz;renderBiz=function(){_rb();extra()};
+renderBiz();
+</script>
+
+</body>
+</html>

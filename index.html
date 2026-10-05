@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meesho Mission Mode Prototype</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a working table. Left rail = journey steps, centre = the phone with a Today / Mission Mode switch, right = evidence card. Plum ground, saffron marks what is new. */
+:root{
+  --bg:#f6f2f5; --panel:#ffffff; --ink:#24101f; --ink2:#5c4757; --muted:#8a7486; --line:#e5d8e2;
+  --plum:#4b0f40; --plum2:#6d1a5d; --mag:#c2185b; --saffron:#f29a1d; --saffron-soft:#fff1dc;
+  --good:#1f8a4c; --good-soft:#e3f4ea; --bad:#c62828; --bad-soft:#fde7e7; --chip:#f3eef2;
+  --bar1:#6d1a5d; --bar2:#c9a2bf; --grid:#ecdfe8;
+  --f-d:"Baloo 2","Trebuchet MS",system-ui,sans-serif; --f-b:"Mukta","Segoe UI",system-ui,sans-serif; --f-m:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#170a14; --panel:#22111e; --ink:#f6eaf2; --ink2:#d1bccb; --muted:#a58e9f; --line:#3a2335;
+  --plum:#2a0824; --plum2:#a2448f; --mag:#ff5c95; --saffron:#ffb347; --saffron-soft:#3a2a12;
+  --good:#5fd08f; --good-soft:#123222; --bad:#ff7a7a; --bad-soft:#3a1616; --chip:#2e1a29;
+  --bar1:#d77bc4; --bar2:#6b3d61; --grid:#352030; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#170a14; --panel:#22111e; --ink:#f6eaf2; --ink2:#d1bccb; --muted:#a58e9f; --line:#3a2335;
+  --plum:#2a0824; --plum2:#a2448f; --mag:#ff5c95; --saffron:#ffb347; --saffron-soft:#3a2a12;
+  --good:#5fd08f; --good-soft:#123222; --bad:#ff7a7a; --bad-soft:#3a1616; --chip:#2e1a29;
+  --bar1:#d77bc4; --bar2:#6b3d61; --grid:#352030; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-b);font-size:16px;line-height:1.5;margin:0}
+button{font-family:inherit}
+.wrap{max-width:1220px;margin:0 auto;padding-inline:20px;padding-block:0 48px}
+header.top{background:#4b0f40;color:#fff;padding-inline:20px;padding-block:18px 0}
+header.top .inner{max-width:1220px;margin:0 auto}
+.eyebrow{font-family:var(--f-m);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:#f5c9e6}
+h1{font-family:var(--f-d);font-weight:800;font-size:clamp(28px,4vw,42px);line-height:1.05;margin:6px 0 4px}
+h1 span{color:#f29a1d}
+.sub{color:#ead6e4;max-width:78ch;margin:0 0 12px}
+.concept{display:inline-block;font-size:12.5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:2px 12px;margin-bottom:14px}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs a{color:#ead6e4;text-decoration:none;font-family:var(--f-d);font-weight:700;font-size:16px;padding:9px 16px 7px;border-radius:12px 12px 0 0}
+nav.tabs a[aria-current="page"]{background:var(--bg);color:var(--ink)}
+nav.tabs a:focus-visible{outline:2px solid #f29a1d;outline-offset:2px}
+section.view{padding-top:22px}
+h2{font-family:var(--f-d);font-weight:800;font-size:26px;line-height:1.15;margin:0 0 6px}
+h3{font-family:var(--f-d);font-weight:700;font-size:19px;margin:0 0 6px}
+p{margin:0}
+.lede{color:var(--ink2);max-width:76ch;margin-bottom:16px}
+.mono{font-family:var(--f-m)}
+/* journey */
+.jgrid{display:grid;grid-template-columns:minmax(0,1fr) 384px minmax(0,1.15fr);gap:22px;align-items:start}
+@media (max-width:1060px){.jgrid{grid-template-columns:1fr}.phonecol{order:-1}}
+.steps{display:flex;flex-direction:column;gap:4px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:10px;text-align:left;background:transparent;border:1px solid transparent;border-radius:12px;padding:9px 10px;color:var(--ink);cursor:pointer}
+.step:hover{background:var(--panel);border-color:var(--line)}
+.step[aria-current="step"]{background:var(--panel);border-color:var(--plum2)}
+.step .n{font-family:var(--f-m);font-size:12px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--chip);color:var(--ink);font-weight:600}
+.step[aria-current="step"] .n{background:var(--saffron);color:#24101f}
+.step b{font-family:var(--f-d);font-weight:700;font-size:15.5px;display:block;line-height:1.2}
+.step span{font-size:13.5px;color:var(--ink2)}
+.step:focus-visible{outline:2px solid var(--saffron)}
+.modebar{display:flex;justify-content:center;margin-bottom:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.seg button{font-weight:700;font-size:14.5px;padding:9px 16px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"].today{background:var(--bad-soft);color:var(--bad)}
+.seg button[aria-pressed="true"].mm{background:var(--plum2);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.phone{width:372px;max-width:100%;margin:0 auto;border-radius:40px;background:#111;padding:12px;box-shadow:0 20px 50px rgba(40,5,30,.25)}
+.screen{background:#fff;color:#1d1b1c;border-radius:30px;height:720px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-size:14px}
+.sbar{display:flex;justify-content:space-between;font:600 12px var(--f-m);padding:10px 20px 4px;color:#333}
+.scr{flex:1;overflow-y:auto;overflow-x:hidden}
+.scr::-webkit-scrollbar{width:0}
+.ribbon{font:600 10.5px var(--f-m);letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;text-align:center}
+.ribbon.today{background:#fde7e7;color:#a11}
+.ribbon.mm{background:#4b0f40;color:#f29a1d}
+.ah{padding:8px 14px 10px;border-bottom:1px solid #eee}
+.row{display:flex;align-items:center;gap:8px}
+.wm{font-family:var(--f-d);font-weight:800;font-size:21px;color:#6d1a5d}
+.wm small{font-family:var(--f-b);font-size:10px;color:#999;font-weight:500;margin-left:4px}
+.search{margin-top:8px;display:flex;align-items:center;gap:8px;border:1.5px solid #d8c8d4;border-radius:10px;padding:8px 10px;color:#777;background:#fff;font-size:13.5px}
+.search b{color:#1d1b1c;font-weight:600}
+.navchips{display:flex;gap:6px;overflow-x:auto;padding:8px 14px 2px}
+.navchips::-webkit-scrollbar{height:0}
+.nc{flex:none;font-size:12.5px;padding:3px 10px;border-radius:999px;background:#f3eef2;color:#4b0f40;font-weight:600}
+.nc.hl{outline:2px solid #c62828}
+.sect{padding:10px 14px 4px;font-family:var(--f-d);font-weight:700;font-size:16px}
+.sect small{font-family:var(--f-b);font-weight:500;color:#888;font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:6px 14px 14px}
+.card{border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff;text-align:left;padding:0;color:inherit;font:inherit;cursor:default}
+.card .img{aspect-ratio:1.15/1;display:grid;place-items:center;position:relative;background:#f6f1f4}
+.card .img svg{width:54%;height:54%}
+.card .meta{padding:6px 8px 8px;font-size:12px;line-height:1.3}
+.card .ttl{color:#555;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.card .ttl.clear{color:#1d1b1c;font-weight:600}
+.card .pr{font-weight:700;font-size:14px;color:#1d1b1c;margin-top:2px}
+.rtp{display:inline-block;background:#1f8a4c;color:#fff;border-radius:999px;padding:0 6px;font-weight:600;font-size:10.5px}
+.rtp.low{background:#b26a00}
+.facts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.fact{font-size:10px;background:#e9f6ee;color:#14542f;border-radius:5px;padding:1px 5px;font-weight:600}
+.fact.warn{background:#fff1dc;color:#8a5200}
+.fit-b{position:absolute;right:5px;bottom:5px;background:#1f8a4c;color:#fff;font:600 9.5px var(--f-b);padding:3px 6px;border-radius:6px}
+.btnp{display:block;width:calc(100% - 28px);margin:6px 14px 14px;background:#6d1a5d;color:#fff;border:0;border-radius:10px;padding:12px;font-weight:700;font-size:14.5px;cursor:pointer}
+.btnp.alt{background:#fff;color:#6d1a5d;border:1.5px solid #6d1a5d}
+.btnp:focus-visible{outline:2px solid #f29a1d;outline-offset:2px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px}
+.mtile{border:1.5px solid #e8dce5;border-radius:12px;padding:10px;text-align:left;background:#fff;cursor:pointer;color:#1d1b1c}
+.mtile b{display:block;font-family:var(--f-d);font-size:15px}
+.mtile span{font-size:11.5px;color:#777}
+.mtile.on{border-color:#6d1a5d;background:#faf3f9}
+.mtile:focus-visible{outline:2px solid #f29a1d}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:4px 14px}
+.chipb{border:1.5px solid #e2d4de;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;color:#1d1b1c}
+.chipb.on{background:#6d1a5d;border-color:#6d1a5d;color:#fff;font-weight:600}
+.chipb:focus-visible{outline:2px solid #f29a1d}
+.qtitle{padding:14px 14px 4px;font-family:var(--f-d);font-weight:800;font-size:21px;line-height:1.15}
+.qsub{padding:0 14px 6px;color:#666;font-size:13px}
+.setcard{margin:8px 14px;border:1px solid #eee;border-radius:14px;overflow:hidden}
+.seth{background:#4b0f40;color:#fff;padding:9px 12px;display:flex;justify-content:space-between;align-items:center}
+.seth b{font-family:var(--f-d);font-size:15.5px}
+.seth span{font:600 13px var(--f-m);color:#f29a1d}
+.setrow{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid #f1eaef;font-size:12.5px}
+.setrow .th{width:44px;height:44px;border-radius:8px;background:#f6f1f4;display:grid;place-items:center}
+.setrow .th svg{width:30px;height:30px}
+.setrow b{font-weight:600;display:block;color:#1d1b1c}
+.setrow small{color:#777}
+.ladder{display:flex;gap:6px;padding:6px 14px 2px}
+.ladder button{flex:1;border:1.5px solid #e2d4de;background:#fff;border-radius:10px;padding:6px 4px;font-size:12px;cursor:pointer;color:#1d1b1c}
+.ladder button.on{border-color:#6d1a5d;background:#faf3f9;font-weight:700}
+.pdp-img{height:230px;display:grid;place-items:center;background:#f6f1f4;position:relative}
+.pdp-img svg{width:48%}
+.pd{padding:10px 14px}
+.pd h4{margin:0;font-weight:600;font-size:15px;line-height:1.3}
+.pd .big{font-size:22px;font-weight:700;margin-top:4px}
+.ktab{margin:8px 14px;border:1px solid #eee;border-radius:12px;overflow:hidden;font-size:12.5px}
+.ktab div{display:grid;grid-template-columns:110px 1fr;padding:6px 10px;border-top:1px solid #f3eef2}
+.ktab div:first-child{border-top:0}
+.ktab span{color:#777}
+.badge-line{margin:6px 14px;display:flex;gap:8px;align-items:center;background:#fff6e6;border:1px solid #f6d29a;border-radius:10px;padding:8px 10px;font-size:12.5px}
+.badge-line b{color:#6d1a5d}
+.block{margin:10px 14px;border:1px solid #eee;border-radius:12px;padding:10px 12px}
+.block h5{margin:0 0 6px;font-size:13.5px;font-family:var(--f-d)}
+.opt{display:flex;justify-content:space-between;align-items:center;border:1.5px solid #e5e5e5;border-radius:10px;padding:8px 10px;margin-top:6px;font-size:12.5px;background:#fff;width:100%;color:#1d1b1c;text-align:left;cursor:pointer}
+.opt.on{border-color:#6d1a5d;background:#faf3f9}
+.opt:focus-visible{outline:2px solid #f29a1d}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12.5px;padding-bottom:9px}
+.tl li::before{content:"";width:12px;height:12px;border-radius:50%;background:#1f8a4c;margin-top:4px}
+.tl li.p::before{background:#ddd}
+.tl li.w::before{background:#e0a100}
+.tl small{color:#777;display:block;font-size:11px}
+.packshot{margin:6px 0 4px;border-radius:10px;overflow:hidden;border:1px solid #e5e5e5;position:relative;background:#efe9e2;height:150px;display:grid;place-items:center}
+.packshot svg{width:44%}
+.stamp{position:absolute;left:8px;top:8px;background:#1f8a4c;color:#fff;font:700 10.5px var(--f-m);padding:3px 7px;border-radius:6px}
+.checks{display:grid;gap:3px;font-size:12px;margin-top:4px}
+.checks span::before{content:"✓ ";color:#1f8a4c;font-weight:800}
+.scene{margin:12px 14px;border-radius:16px;background:#fbf4ea;border:1px solid #f0dfc6;padding:14px}
+.scene .who{font-family:var(--f-d);font-weight:700;font-size:15px}
+.bub{max-width:88%;border-radius:12px;padding:8px 11px;font-size:13px;margin-top:8px;background:#fff;border:1px solid #eee}
+.bub.me{margin-left:auto;background:#e9f6ee;border-color:#cfe9d9}
+.standee{margin:12px auto 4px;width:190px;border-radius:14px;background:#4b0f40;color:#fff;text-align:center;padding:12px}
+.standee b{font-family:var(--f-d);font-size:15px;display:block}
+.standee small{color:#f5c9e6;font-size:11px}
+.qr{width:110px;height:110px;margin:8px auto;background:#fff;border-radius:8px;padding:6px}
+.toast{position:absolute;left:12px;right:12px;bottom:16px;background:#1d1b1c;color:#fff;border-radius:10px;padding:10px 12px;font-size:12.5px;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.okbig{text-align:center;padding:22px 16px 6px}
+.okbig .c{width:58px;height:58px;border-radius:50%;background:#1f8a4c;color:#fff;display:grid;place-items:center;font-size:28px;margin:0 auto 8px}
+.okbig h4{font-family:var(--f-d);font-size:19px;margin:0}
+.okbig p{font-size:12.5px;color:#555;margin-top:4px}
+.dim{opacity:.55}
+.ctrls{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.btn{font-weight:600;font-size:15px;border-radius:10px;padding:10px 16px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--plum2);border-color:var(--plum2);color:#fff}
+.btn:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:default}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.note .feat{display:inline-block;font:600 11px var(--f-m);letter-spacing:.06em;text-transform:uppercase;background:var(--saffron-soft);color:var(--ink);border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.cmp{display:grid;gap:10px;margin-top:10px}
+.cmp div{border-radius:10px;padding:10px 12px;font-size:14.5px}
+.cmp .t{background:var(--bad-soft)}
+.cmp .m{background:var(--good-soft)}
+.cmp small{display:block;font-family:var(--f-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:2px}
+.src{font-size:12px;color:var(--muted);margin-top:10px}
+.kpi-chip{display:inline-block;margin-top:10px;font-family:var(--f-m);font-size:12px;background:var(--chip);padding:4px 10px;border-radius:999px}
+/* behind the scenes */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:920px){.two{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.pick button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13.5px;cursor:pointer}
+.pick button[aria-pressed="true"]{background:var(--plum2);border-color:var(--plum2);color:#fff}
+.pick button:focus-visible{outline:2px solid var(--saffron)}
+.pipe{display:grid;gap:8px}
+.ps{border:1px solid var(--line);border-radius:12px;padding:10px 12px;opacity:.35;transition:opacity .3s}
+.ps.on{opacity:1}
+.ps h4{margin:0 0 4px;font-family:var(--f-d);font-size:15.5px}
+.ps .k{font-family:var(--f-m);font-size:12.5px;color:var(--ink2);white-space:pre-wrap;word-break:break-word}
+.conf{display:inline-block;font-family:var(--f-m);font-size:11.5px;border-radius:6px;padding:0 6px;margin-left:4px}
+.conf.ok{background:var(--good-soft);color:var(--good)}
+.conf.no{background:var(--bad-soft);color:var(--bad)}
+.out{border-radius:12px;padding:12px;background:var(--good-soft);margin-top:4px}
+.out .before{text-decoration:line-through;color:var(--muted);font-size:14px}
+.out .after{font-weight:700;font-size:16.5px}
+.matchbox{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.matchbox figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.matchbox figure div{height:130px;display:grid;place-items:center;background:#f6f1f4}
+.matchbox figure div svg{width:42%}
+.matchbox figcaption{font-size:12.5px;padding:6px 8px;color:var(--ink2)}
+.verdict{border-radius:12px;padding:10px 12px;font-weight:600}
+.verdict.ok{background:var(--good-soft);color:var(--good)}
+.verdict.no{background:var(--bad-soft);color:var(--bad)}
+.scale{margin-top:20px}
+.scale ul{margin:8px 0 0;padding-left:18px;color:var(--ink2)}
+.scale li{margin-bottom:4px}
+/* shop */
+.shopgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0}
+@media (max-width:820px){.shopgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi small{font-family:var(--f-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.kpi b{display:block;font-family:var(--f-d);font-weight:800;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums;margin-top:4px}
+.kpi span{font-size:13px;color:var(--ink2)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);font-size:14px}
+th:first-child,td:first-child{text-align:left}
+thead th{font-family:var(--f-m);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);font-weight:500}
+tr.sec td{font-family:var(--f-m);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);background:var(--bg)}
+tr.tot td{font-weight:700}
+td.neg{color:var(--bad)} td.pos{color:var(--good)}
+.pill{font-family:var(--f-m);font-size:11px;border-radius:999px;padding:2px 8px;font-weight:600}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.hold{background:var(--saffron-soft);color:var(--ink)}
+/* business */
+.controls{display:flex;flex-wrap:wrap;gap:16px 26px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.ctl label{display:block;font-size:13px;color:var(--ink2);margin-bottom:4px}
+.ctl output{font-family:var(--f-m);font-size:13px;color:var(--ink);margin-left:6px}
+.ctl input[type=range]{width:170px;accent-color:var(--plum2)}
+.seg3{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg3 button{font-weight:600;font-size:14px;padding:8px 14px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg3 button[aria-pressed="true"]{background:var(--plum2);color:#fff}
+.seg3 button:focus-visible{outline:2px solid var(--saffron);outline-offset:-2px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media (max-width:860px){.charts{grid-template-columns:1fr}}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 14px 8px;position:relative;min-width:0}
+.chart p.cap{font-size:13px;color:var(--ink2);margin-bottom:6px}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart text{fill:var(--ink2);font-family:var(--f-m);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;border-radius:8px;padding:6px 9px;white-space:nowrap;opacity:0;transition:opacity .12s;font-family:var(--f-m)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.foot{margin-top:22px;font-size:12.5px;color:var(--muted);max-width:100ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<header class="top"><div class="inner">
+  <div class="eyebrow">Meesho DICE Challenge 3.0 · Detailed submission · Neeraj Wankhede, Team FireFlux, IIT Bombay</div>
+  <h1>Meesho <span>Mission Mode</span></h1>
+  <p class="sub">A working prototype of four features that turn the men who already visit Meesho into buyers who trust it: <b>Mission Start</b>, <b>Clear Listings</b>, <b>Pack Proof</b> and <b>Dukaan QR</b>. Flip any screen between <b>Meesho today</b> (real data from my audit) and <b>Mission Mode</b>.</p>
+  <span class="concept">Concept prototype by a student. Not an official Meesho product. "Today" screens recreate what I saw on meesho.com on 2–3 Oct 2026; everything else is sample data.</span>
+  <nav class="tabs" aria-label="Prototype views">
+    <a href="#journey" data-v="journey">Customer journey</a>
+    <a href="#engine" data-v="engine">Behind the scenes</a>
+    <a href="#shop" data-v="shop">Shop owner</a>
+    <a href="#business" data-v="business">Business case</a>
+  </nav>
+</div></header>
+
+<div class="wrap">
+<section class="view" id="v-journey">
+  <h2>Ravi's first week with Mission Mode</h2>
+  <p class="lede">Ravi, 24, works in a showroom in Bhilwara and uses a Redmi 13C. He has opened Meesho once, saw sarees, and left. Walk through the nine moments, and flip each one between today's Meesho and Mission Mode.</p>
+  <div class="jgrid">
+    <div class="steps" id="steps"></div>
+    <div class="phonecol">
+      <div class="modebar"><div class="seg" role="group" aria-label="Which version"><button type="button" class="today" data-mode="today" aria-pressed="false">Meesho today</button><button type="button" class="mm" data-mode="mm" aria-pressed="true">Mission Mode</button></div></div>
+      <div class="phone"><div class="screen" id="screen" aria-live="polite"></div></div>
+      <div class="ctrls"><button class="btn" id="prev" type="button">Back</button><button class="btn primary" id="next" type="button">Next moment</button></div>
+    </div>
+    <aside class="note" id="note"></aside>
+  </div>
+</section>
+
+<section class="view" id="v-engine" hidden>
+  <h2>How it works under the hood</h2>
+  <p class="lede">Two AI checks do the heavy lifting. Both run on systems Meesho already operates: its 2022 image-tagging models and its Trust &amp; Safety image capture. Pick a real listing from my audit and run it.</p>
+  <div class="two">
+    <div class="panel">
+      <h3>Clear Listings pipeline</h3>
+      <div class="pick" id="pickL"></div>
+      <p class="src" style="margin:0 0 8px">Titles are real (my audit). The charger's fields are real; other field values and confidence scores are illustrative.</p><button class="btn primary" id="runL" type="button">Run Clear Listings</button>
+      <div class="pipe" id="pipe" style="margin-top:12px"></div>
+    </div>
+    <div class="panel">
+      <h3>Pack Proof check at packing</h3>
+      <div class="pick" id="pickP"></div>
+      <div id="pack"></div>
+    </div>
+  </div>
+  <div class="panel scale">
+    <h3>Why it scales to 27.4 crore buyers</h3>
+    <ul>
+      <li><b>Clear Listings runs offline, once per listing.</b> The clean title is stored as a field, so serving it costs nothing extra whether 1 lakh or 27 crore people open it. Cost grows with listings, not users.</li>
+      <li><b>It reuses Meesho's own capability.</b> Meesho's image-tagging models (2022) matched or beat human taggers on kurtis and cut ~60% of tagging work across 3,000+ categories. Walmart and Amazon already use LLMs on listings.</li>
+      <li><b>Pack Proof is risk-based.</b> One photo, only on orders ≥ ₹499, high-claim categories and new sellers. Estimated ₹0.30 per check in the model.</li>
+      <li><b>Safety rails:</b> only facts from fields and photos, a confidence threshold, a "flag this title" button for sellers, human QC on top SKUs, and an A/B test before rollout.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="view" id="v-shop" hidden>
+  <h2>Raju Mobiles, Bhilwara: shop owner view</h2>
+  <p class="lede">What a partner shop sees in its Dukaan QR dashboard. Sample month, sized to match the business model (about one new Meesho buyer per shop per week).</p>
+  <div class="shopgrid">
+    <div class="kpi"><small>QR scans</small><b>41</b><span>this month</span></div>
+    <div class="kpi"><small>New Meesho buyers</small><b>4</b><span>first orders via my QR</span></div>
+    <div class="kpi"><small>Referred orders</small><b>14</b><span>₹4,340 of sales, any seller</span></div>
+    <div class="kpi"><small>Returns handled</small><b>2</b><span>phone &amp; accessory orders</span></div>
+  </div>
+  <div class="two">
+    <div class="panel">
+      <h3>Earnings this month</h3>
+      <div class="tbl-wrap" style="border:0"><table>
+        <tbody>
+          <tr><td>Commission: 1.5% of ₹4,340 referred sales</td><td>₹65</td></tr>
+          <tr><td>First-order bonus: 4 new buyers × ₹50</td><td>₹200</td></tr>
+          <tr class="tot"><td>Earned</td><td>₹265</td></tr>
+          <tr><td>Held in reserve for 60 days (20%) <span class="pill hold">Fraud guard</span></td><td class="neg">(₹53)</td></tr>
+          <tr class="tot"><td>Paid to your UPI on the 5th</td><td>₹212</td></tr>
+        </tbody></table></div>
+      <p class="src">Reserve from earlier months released: ₹48 · Status <span class="pill ok">Good standing</span> · No complaints in 90 days</p>
+    </div>
+    <div class="panel">
+      <h3>How Raju earns, and why he will bother</h3>
+      <ul style="margin:6px 0 0;padding-left:18px;color:var(--ink2)">
+        <li><b>Out of stock no longer means a lost customer.</b> He scans the buyer in, the order ships from any Meesho seller, and he earns on it.</li>
+        <li><b>Referral window: 90 days.</b> Every order that buyer places for 90 days pays Raju 1.5%.</li>
+        <li><b>Phase 2:</b> list his own stock on Meesho and ship locally via Valmo. This is where real money is: full product margin, not a commission.</li>
+        <li><b>Trust point for his category:</b> customers drop returns for phone and accessory orders at his counter and ask him for help. Shoes and clothes still go back by home pickup. Every visit brings people back into his shop.</li>
+        <li><b>Commission covers every category</b> a referred buyer orders for 90 days, because Raju brought that customer to Meesho.</li>
+        <li><b>Honest constraint:</b> at 1.5% alone a shop earns only ~₹1,000–2,000 a year, so the ₹50 first-order bonus and phase 2 matter. Both are in the model.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-business" hidden>
+  <h2>When does Mission Mode make money?</h2>
+  <p class="lede">The same model as the Excel file, live. Revenue and margin use Meesho's reported ratios (30.4% of NMV, 4.6% contribution margin). Buyers, shops and costs are my estimates, sized against Meesho's real base of 274M annual buyers (about 46% men). Pilot starts January 2027.</p>
+  <div class="controls">
+    <div class="ctl"><label id="scl">Scenario</label><div class="seg3" role="group" aria-labelledby="scl"><button type="button" data-s="bear" aria-pressed="false">Bear</button><button type="button" data-s="base" aria-pressed="true">Base</button><button type="button" data-s="bull" aria-pressed="false">Bull</button></div></div>
+    <div class="ctl"><label for="r-comm">Shop commission<output id="o-comm">1.5%</output></label><input id="r-comm" type="range" min="0.5" max="5" step="0.5" value="1.5"></div>
+    <div class="ctl"><label for="r-bonus">First-order bonus per buyer<output id="o-bonus">₹50</output></label><input id="r-bonus" type="range" min="0" max="150" step="10" value="50"></div>
+    <div class="ctl"><label for="r-mkt">Marketing spend<output id="o-mkt">100%</output></label><input id="r-mkt" type="range" min="50" max="150" step="10" value="100"></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Payback</small><b id="k-pay">—</b><span id="k-pay2"></span></div>
+    <div class="kpi"><small>Peak investment</small><b id="k-peak">—</b><span id="k-peak2"></span></div>
+    <div class="kpi"><small>FY31 incremental sales</small><b id="k-nmv">—</b><span id="k-nmv2"></span></div>
+    <div class="kpi"><small>FY31 profit impact</small><b id="k-e">—</b><span id="k-e2"></span></div>
+  </div>
+  <div class="charts">
+    <div class="chart" id="c1"><h3>Incremental NMV</h3><p class="cap">₹ crore per year</p><svg id="svg1" viewBox="0 0 460 240" role="img" aria-label="Incremental NMV by year"></svg><div class="tip" id="tip1"></div></div>
+    <div class="chart" id="c2"><h3>Cumulative profit impact</h3><p class="cap">₹ crore, after every Mission Mode cost</p><svg id="svg2" viewBox="0 0 460 240" role="img" aria-label="Cumulative EBITDA impact"></svg><div class="tip" id="tip2"></div></div>
+  </div>
+  <div class="tbl-wrap"><table id="pl"></table></div>
+  <p class="foot">Sources: Meesho Q1 FY27 shareholder letter (274M annual transacting users, 10.3 orders per user, contribution margin 4.6% of NMV, cash ₹6,521 cr); Meesho FY26 results via Medianama (revenue ₹12,626 cr ÷ NMV ₹41,560 cr = 30.4%; AOV ₹265); Axis Capital IPO note (54.22% of FY25 consumers were women); Business Standard (Kirana Club, 4.1M retailers); Amazon India (1 lakh+ Local Shops). Every other driver is my estimate and is listed on the Assumptions sheet of the Excel model.</p>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+/* ---------- icons ---------- */
+const IC={
+ sneaker:c=>`<svg viewBox="0 0 60 40"><path d="M4 28c0-6 3-14 8-16l8 6c6 3 14 4 22 5 8 1 14 4 14 9v2H4z" fill="${c||'#fff'}" stroke="#6d1a5d" stroke-width="2"/><rect x="4" y="32" width="52" height="5" rx="2" fill="#6d1a5d"/><path d="M18 19l4-3M23 21l4-3M28 23l4-3" stroke="#6d1a5d" stroke-width="2"/></svg>`,
+ shirt:c=>`<svg viewBox="0 0 60 60"><path d="M20 8l10 5 10-5 14 9-6 9-6-3v29H18V23l-6 3-6-9z" fill="${c||'#9fb8d8'}" stroke="#2f3a4a" stroke-width="2"/><path d="M30 13v40" stroke="#2f3a4a" stroke-width="1.5"/></svg>`,
+ tee:c=>`<svg viewBox="0 0 60 60"><path d="M20 8c3 4 17 4 20 0l14 9-6 9-6-3v29H18V23l-6 3-6-9z" fill="${c||'#1d1b1c'}"/></svg>`,
+ cargo:c=>`<svg viewBox="0 0 60 60"><path d="M18 6h24l4 48h-11l-5-30-5 30H14z" fill="${c||'#7a7f4f'}"/><rect x="14" y="30" width="7" height="9" fill="#5e6338"/><rect x="39" y="30" width="7" height="9" fill="#5e6338"/></svg>`,
+ watch:c=>`<svg viewBox="0 0 60 60"><rect x="24" y="4" width="12" height="52" rx="3" fill="#2f3a4a"/><circle cx="30" cy="30" r="13" fill="#fff" stroke="#2f3a4a" stroke-width="3"/><text x="30" y="34" font-size="9" text-anchor="middle" font-family="monospace" fill="#2f3a4a">10:08</text></svg>`,
+ cover:c=>`<svg viewBox="0 0 60 60"><rect x="16" y="6" width="28" height="48" rx="6" fill="${c||'#2f3a4a'}"/><rect x="20" y="10" width="11" height="13" rx="3" fill="#111"/><circle cx="25.5" cy="16.5" r="3.5" fill="#556"/></svg>`,
+ charger:c=>`<svg viewBox="0 0 60 60"><rect x="14" y="12" width="32" height="38" rx="6" fill="#efe6ed" stroke="#6d1a5d" stroke-width="2"/><rect x="22" y="4" width="4" height="10" fill="#6d1a5d"/><rect x="34" y="4" width="4" height="10" fill="#6d1a5d"/><path d="M32 22l-6 10h6l-3 9 9-12h-6l3-7z" fill="#f29a1d"/></svg>`,
+ buds:c=>`<svg viewBox="0 0 60 60"><rect x="10" y="26" width="40" height="24" rx="12" fill="${c||'#fff'}" stroke="#555" stroke-width="2"/><circle cx="22" cy="18" r="8" fill="${c||'#fff'}" stroke="#555" stroke-width="2"/><circle cx="38" cy="18" r="8" fill="${c||'#fff'}" stroke="#555" stroke-width="2"/></svg>`,
+ bottle:c=>`<svg viewBox="0 0 60 60"><rect x="22" y="14" width="16" height="40" rx="5" fill="${c||'#7fb4d8'}"/><rect x="25" y="6" width="10" height="9" fill="#2f3a4a"/></svg>`,
+ soap:c=>`<svg viewBox="0 0 60 60"><rect x="10" y="20" width="40" height="24" rx="10" fill="${c||'#f0c8a0'}"/></svg>`,
+ kurti:c=>`<svg viewBox="0 0 60 60"><path d="M22 6h16l10 14-6 4v30H18V24l-6-4z" fill="${c||'#e08aa8'}"/></svg>`,
+ phone:c=>`<svg viewBox="0 0 60 60"><rect x="18" y="4" width="24" height="52" rx="5" fill="#2f3a4a"/><rect x="21" y="9" width="18" height="40" rx="2" fill="#9fc6e8"/></svg>`
+};
+const qrSVG=()=>{let s='<svg viewBox="0 0 21 21" width="100%" height="100%" shape-rendering="crispEdges">';let seed=7;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+ for(let y=0;y<21;y++)for(let x=0;x<21;x++){const f=(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);if(f){const cx=x<7?x:x-14,cy=y<7?y:y-14;const on=(cx==0||cx==6||cy==0||cy==6)||(cx>1&&cx<5&&cy>1&&cy<5);if(on)s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#1d1b1c"/>`}else if(rnd()>.52)s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#1d1b1c"/>`}
+ return s+'</svg>'};
+
+/* ---------- state ---------- */
+const S={step:0,mode:'mm',mission:'College',budget:'₹1,499',style:'Street',ladder:2,retDone:false,claim:false};
+const STEPS=[
+ ['At the repair shop','Dukaan QR'],['First open','Mission Start'],['His home screen','Mission Start'],['Phone gear','Mission Start + existing filter'],
+ ['Searching "sneakers"','Clear Listings'],['Product page','Clear Listings'],['Checkout','Pack Proof + Dukaan QR referral'],['Order tracking','Pack Proof'],['Returning his charger','Dukaan QR']];
+const NOTES=[
+ {f:'Dukaan QR',t:'Ravi asks for a charger at Raju Mobiles. It is out of stock. Today that is a lost sale for the shop and a wasted trip for him.',m:'Raju shows a Meesho QR standee. The scan opens Meesho on the Phone gear mission with his phone model filled in. Raju earns 1.5% on Ravi\'s orders for 90 days plus a ₹50 first-order bonus.',k:'New male buyers per shop per week',s:'Builds on Kirana Club (4.1M retailers). Amazon\'s Local Shops passed 1 lakh stores, so shop networks at this scale exist.'},
+ {f:'Mission Start',t:'The first screen says "Try Saree, Kurti or Search by Product Code". Popular searches: short kurti, saree, kurti, tshirt, earring. The menu runs Popular, Kurti/Saree, Women Western, Lingerie, then Men.',m:'Two taps: "What are you shopping for today?" then budget and style. It asks about the mission, never gender, because people shop for others. Existing users keep today\'s home.',k:'First-session product clicks',s:'Source: my audit of meesho.com, logged out, 3 Oct 2026.'},
+ {f:'Mission Start',t:'"Products For You" showed 2 men\'s items out of 20: the rest were hair oil, soaps, face washes, lipstick, a kurti and puja items. More than 75% of Meesho orders come from personalised feeds, and the feed knows nothing about a new man.',m:'His home opens on his mission as ready sets with a price ladder (₹299 → ₹799 → ₹1,499). Sets are filled from Meesho\'s existing feed engine (PRISM) and trend system (Trendpulse), now given the signal they lacked.',k:'First-order conversion of new male users',s:'Feed share: Meesho FY26 AI disclosures via Multibagg. Feed count: my audit, 3 Oct 2026.'},
+ {f:'Mission Start + existing filter',t:'A "mobile back cover" search mixed covers for 8+ phone models (Redmi 12C, vivo Y16, POCO X5 Pro, Vivo Y19e…). The "Compatible Models" filter exists but he has to find it.',m:'The Phone gear mission asks his phone model once and applies the existing Compatible Models filter for him. Nothing new to build in the catalogue; it is wiring.',k:'Search-to-order conversion; wrong-item returns',s:'Source: my audit of meesho.com search results, 2 Oct 2026.'},
+ {f:'Clear Listings',t:'Real top results for "sneakers": "Fabulous Men Sneakers", "Pretty Men Sneakers", "Cutiepie Men Sneakers", "Gorgeous Men Sneakers". None states material, sole or fit. 11 of the top 20 men\'s shirts are named "Pretty", "Ravishing" or similar.',m:'Same products, same prices, same ratings. The title he sees is rebuilt from facts already in the listing fields and photos: type, material, size range, fit. Uncertain facts are left out.',k:'Search-to-product click rate',s:'Real titles and prices: my audit, 3 Oct 2026. Rewritten titles are illustrative outputs.'},
+ {f:'Clear Listings',t:'The product page leads with a name that tells him nothing, and the default return covers only wrong or defective items; "any reason" return is a paid add-on.',m:'Plain facts first, a fit hint only when enough reviews agree, and the trust line that matters to him: Pack Proof on this order, so any wrong item is settled with a photo.',k:'Product-page-to-order conversion; size-related returns',s:'Returns rule: Meesho Returns, Exchange and Refunds Policy page.'},
+ {f:'Dukaan QR + Pack Proof',t:'Standard checkout. Nothing tells him what happens if the wrong item arrives.',m:'COD stays and Pack Proof is on. The order is tagged to Raju Mobiles: he earns 1.5% because he brought Ravi in, even though he does not sell shoes. Returns for shoes use normal home pickup; Raju only handles phone and accessory orders.',k:'Share of male orders ≥ ₹499',s:''},
+ {f:'Pack Proof',t:'Meesho already uses transparent packaging, doorstep photos and catalogue checks at return pickup, but only for internal disputes. The buyer never sees any of it. Wrong items drew 75,426 complaints to the National Consumer Helpline in 2025.',m:'The seller snaps one photo while packing; AI matches colour, print and size label to the listing before pickup. Ravi sees "This is in your parcel". If something is still wrong, the photo settles the claim in one tap.',k:'Wrong-item claim rate; claim resolution time',s:'Meesho tech blog, "Every order carries a risk"; NCH data via Inc42 (2026).'},
+ {f:'Dukaan QR',t:'Return pickups are a common pain: "Trying to return a product since jan 9th and the delivery team has not been picking it up" (Suresh Babu, Trustpilot, 22 Jan 2026). Refund and replacement delays drew 61,056 NCH complaints in 2025.',m:'The charger Ravi bought in Phone gear stops working. That is Raju\'s category, so he drops it at Raju\'s counter. Raju checks it, scans it, the refund starts, and Ravi has a person he trusts for Meesho. Shoes and clothes still go back by home pickup.',k:'Repeat rate after a return; 90-day repeat',s:'Trustpilot meesho.com; NCH data via Inc42 (2026).'}
+];
+const TODAY_FEED=[['Herbal hair oil','305','4.3','bottle','#d7a440'],['Unisex perfume','136','3.9','bottle','#8b5a2b'],['De-tan face wash','301','4.2','bottle','#e7b98c'],['Hair growth oil','378','4.0','bottle','#3f6b3f'],['Perfume combo (2)','178','4.0','bottle','#2f5e5e'],['Women kurti with bottomwear','324','4.0','kurti'],['Men popcorn boxy tshirt','258','3.9','tee','#c7c7c7'],['Magic soap 200 gm','295','4.1','soap']];
+const COVERS=[['Redmi 12C Cases & Covers','56','4.2'],['vivo Y16 Cases & Covers','58','3.9'],['POCO X5 Pro 5G Cases & Covers','141','4.2'],['Vivo Y19e Cases & Covers','68','4.2'],['Redmi 14C 5G Cases & Covers','133','3.9'],['Vivo Y29 5G Cases & Covers','76','4.3'],['Redmi 13C Cases & Covers','160','4.1'],['Oppo a15s Cases & Covers','177','4.1']];
+const SNEAK=[
+ {o:'Fabulous Men Sneakers',p:394,r:3.8,n:'2,843',c:'#ffffff',t:'White running sneakers · mesh upper · UK 6–10',f:['Running','Mesh','Lace-up'],fit:'Runs small: size up'},
+ {o:'Pretty Men Sneakers',p:503,r:4.3,n:'485',c:'#2f3a4a',t:'Black high-top sneakers · PU · UK 7–11',f:['High-top','PU','True to size'],fit:''},
+ {o:'Cutiepie Men Sneakers',p:374,r:3.9,n:'Supplier',c:'#e9e2d6',t:'Beige low-top sneakers · canvas · UK 6–10',f:['Casual','Canvas'],fit:''},
+ {o:'Gorgeous Men Sneakers',p:305,r:3.8,n:'904',c:'#cfd8dc',t:'Grey slip-on sneakers · knit · UK 6–9',f:['Slip-on','Knit'],fit:'Narrow fit'},
+ {o:'Elegant Men Sneakers',p:308,r:2.9,n:'7',c:'#a33',t:'Red low-top sneakers · PU · UK 7–10',f:['Casual','PU'],fit:''},
+ {o:'Classy Men Sneakers',p:414,r:3.8,n:'3,332',c:'#f2f2f2',t:'White chunky sneakers · PU · UK 6–11',f:['Chunky','PU','True to size'],fit:''}];
+function sbar(){return '<div class="sbar"><span>9:41</span><span>4G ▮▮▮ 78%</span></div>'}
+function rib(){return S.mode==='today'?'<div class="ribbon today">Meesho today · recreated from my audit</div>':'<div class="ribbon mm">Mission Mode · concept</div>'}
+function head(q,hint){return `<div class="ah"><div class="row"><span class="wm">meesho<small>concept</small></span>${S.mode==='mm'&&S.step>1?'<span style="margin-left:auto;font-size:11.5px;color:#6d1a5d;font-weight:600">Mission: '+S.mission+' · Redmi 13C</span>':''}</div><div class="search">⌕ ${q?'<b>'+q+'</b>':hint}</div></div>`}
+function card(t,p,r,icon,col,extra='',cls=''){return `<div class="card ${cls}"><div class="img">${IC[icon](col)}${extra}</div><div class="meta"><div class="ttl">${t}</div><div class="pr">₹${p}</div><span class="rtp ${r<4?'low':''}">${r} ★</span></div></div>`}
+const SCREENS=[
+ // 0 shop
+ ()=>`${sbar()}${rib()}<div class="scr"><div class="scene"><div class="who">Raju Mobiles · Bhilwara</div>
+   <div class="bub me">Bhaiya, Redmi 13C ka fast charger hai?</div>
+   ${S.mode==='today'?`<div class="bub">Abhi stock khatam. Agle hafte aana.</div><div class="okbig"><div class="c" style="background:#c62828">✕</div><h4>Lost sale, wasted trip</h4><p>Raju earns nothing. Ravi buys a ₹450 charger at the bus stand that dies in two weeks.</p></div>`
+   :`<div class="bub">Stock khatam hai, par ye scan karo. Tere phone pe fit hone wala hi dikhega, 3 din mein ghar aa jayega.</div>
+   <div class="standee"><b>Scan to shop on Meesho</b><div class="qr">${qrSVG()}</div><small>Raju Mobiles · Partner shop</small></div>`}
+  </div>${S.mode==='mm'?'<button class="btnp" data-go="1" type="button">Scan the QR</button>':'<button class="btnp alt" data-mode-go="mm" type="button">See it with Mission Mode</button>'}</div><div class="toast" id="toast"></div>`,
+ // 1 first open
+ ()=>S.mode==='today'?`${sbar()}${rib()}<div class="scr">${head('','Try Saree, Kurti or Search by Product Code')}
+   <div class="navchips"><span class="nc">Popular</span><span class="nc hl">Kurti, Saree &amp; Lehenga</span><span class="nc hl">Women Western</span><span class="nc hl">Lingerie</span><span class="nc">Men</span><span class="nc">Kids &amp; Toys</span></div>
+   <div class="sect">Popular Searches</div><div class="chips"><span class="chipb">short kurti</span><span class="chipb">saree</span><span class="chipb">kurti</span><span class="chipb">tshirt</span><span class="chipb">earring</span></div>
+   <div class="sect">Shop by category</div><div class="grid2">${card('Ethnic Wear','—',4.1,'kurti').replace('₹—','')}${card('Western Dresses','—',4.0,'kurti','#7a9cc6').replace('₹—','')}</div></div><div class="toast" id="toast"></div>`
+ :`${sbar()}${rib()}<div class="scr"><div class="qtitle">What are you shopping for today?</div><div class="qsub">Opened from Raju Mobiles · Redmi 13C detected</div>
+   <div class="mgrid">${[['College','tees, cargos, sneakers'],['First Job','shirts, trousers, belts'],['Gym','dry-fit, shorts, bands'],['Bike','helmet, gloves, mount'],['Phone gear','fits Redmi 13C'],['Gifting','for him or her'],['Home','kitchen, decor'],['Women\'s fashion','sarees, kurtis, tops']].map(([a,b])=>`<button class="mtile ${S.mission===a?'on':''}" data-mission="${a}" type="button"><b>${a}</b><span>${b}</span></button>`).join('')}</div>
+   <div class="sect">Budget</div><div class="chips">${['₹299','₹799','₹1,499','Any'].map(b=>`<button class="chipb ${S.budget===b?'on':''}" data-budget="${b}" type="button">${b}</button>`).join('')}</div>
+   <div class="sect">Style</div><div class="chips">${['Basic','Street','Sporty','Formal'].map(b=>`<button class="chipb ${S.style===b?'on':''}" data-style="${b}" type="button">${b}</button>`).join('')}</div>
+   <button class="btnp" data-go="${S.mission==='Phone gear'?3:2}" type="button">Show my ${S.mission} picks</button></div><div class="toast" id="toast"></div>`,
+ // 2 home
+ ()=>S.mode==='today'?`${sbar()}${rib()}<div class="scr">${head('','Try Saree, Kurti or Search by Product Code')}<div class="sect">Products For You <small>· 2 of 20 for men</small></div>
+   <div class="grid2">${TODAY_FEED.map(x=>card(x[0],x[1],+x[2],x[3],x[4])).join('')}</div></div><div class="toast" id="toast"></div>`
+ :(()=>{const L=[['₹299','Starter',[['tee','Oversized cotton tee · 240 GSM','₹249'],['watch','Digital sports watch','₹149']],'₹398'],['₹799','Smart value',[['tee','Oversized cotton tee · 240 GSM','₹249'],['cargo','Olive cotton cargo · relaxed','₹449'],['watch','Digital sports watch','₹149']],'₹847'],['₹1,499','College fit',[['tee','Oversized cotton tee · 240 GSM','₹249'],['cargo','Olive cotton cargo · relaxed','₹449'],['sneaker','White low-top sneakers · PU','₹449'],['watch','Digital sports watch','₹149']],'₹1,296']];const l=L[S.ladder];
+  return `${sbar()}${rib()}<div class="scr">${head('','Search in College: cargos, sneakers…')}
+   <div class="sect">Your ${S.mission} mission <small>· ${S.style} · up to ${S.budget}</small></div>
+   <div class="ladder">${L.map((x,i)=>`<button class="${i===S.ladder?'on':''}" data-ladder="${i}" type="button">${x[0]}<br><small>${x[1]}</small></button>`).join('')}</div>
+   <div class="setcard"><div class="seth"><b>${l[1]} under ${l[0]}</b><span>${l[3]}</span></div>${l[2].map(([ic,t,p])=>`<div class="setrow"><div class="th">${IC[ic](ic==='tee'?'#1d1b1c':ic==='sneaker'?'#fff':undefined)}</div><div><b>${t}</b><small>4.1★+ · Meesho Gold where available</small></div><b>${p}</b></div>`).join('')}</div>
+   <div class="sect">Trending in Rajasthan this week <small>· from Trendpulse</small></div><div class="chips"><span class="chipb">Baggy jeans</span><span class="chipb">Retro jerseys</span><span class="chipb">Chunky sneakers</span><span class="chipb">Linen shirts</span></div>
+   <button class="btnp" data-go="4" type="button">Search "sneakers"</button></div><div class="toast" id="toast"></div>`})(),
+ // 3 phone gear
+ ()=>S.mode==='today'?`${sbar()}${rib()}<div class="scr">${head('mobile back cover')}<div class="sect">20 results <small>· 8+ phone models mixed</small></div>
+   <div class="grid2">${COVERS.map(x=>card(x[0],x[1],+x[2],'cover',['#d88','#9ab','#333','#c9a','#555','#7a6','#222','#b85'][COVERS.indexOf(x)])).join('')}</div></div><div class="toast" id="toast"></div>`
+ :`${sbar()}${rib()}<div class="scr">${head('','Search in Phone gear…')}<div class="badge-line">📱 <span><b>Showing only items that fit Redmi 13C.</b> Applied the existing Compatible Models filter for you.</span></div>
+   <div class="grid2">${[['Fast charger 18W · Type-C · 1 m cable','349',4.4,'charger'],['Matte black cover · shockproof','149',4.3,'cover','#1d1b1c'],['Tempered glass · 2-pack','99',4.2,'cover','#bfe3ef'],['Clear TPU cover · camera guard','89',4.1,'cover','#dfe8ec']].map(x=>card(x[0],x[1],x[2],x[3],x[4],'<span class="fit-b">✓ Fits Redmi 13C</span>').replace('class="ttl"','class="ttl clear"')).join('')}</div>
+   <button class="btnp alt" data-go="4" type="button">Back to College: search "sneakers"</button></div><div class="toast" id="toast"></div>`,
+ // 4 sneakers
+ ()=>`${sbar()}${rib()}<div class="scr">${head('sneakers')}<div class="sect">${S.mode==='today'?'Top results <small>· real titles, 3 Oct 2026</small>':'Same products, clear titles'}</div>
+   <div class="grid2">${SNEAK.map((x,i)=>`<button class="card" data-go="5" data-sk="${i}" type="button" style="cursor:pointer"><div class="img">${IC.sneaker(x.c)}</div><div class="meta"><div class="ttl ${S.mode==='mm'?'clear':''}">${S.mode==='today'?x.o:x.t}</div><div class="pr">₹${x.p}</div><span class="rtp ${x.r<4?'low':''}">${x.r} ★</span> <small style="color:#888">${x.n}</small>${S.mode==='mm'?`<div class="facts">${x.f.map(f=>`<span class="fact">${f}</span>`).join('')}${x.fit?`<span class="fact warn">${x.fit}</span>`:''}</div>`:''}</div></button>`).join('')}</div></div><div class="toast" id="toast"></div>`,
+ // 5 pdp
+ ()=>{const x=SNEAK[S.sk||5];return S.mode==='today'?`${sbar()}${rib()}<div class="scr"><div class="pdp-img">${IC.sneaker(x.c)}</div><div class="pd"><h4>${x.o}</h4><div class="big">₹${x.p}</div><span class="rtp ${x.r<4?'low':''}">${x.r} ★</span> <small style="color:#888">${x.n} ratings</small></div>
+   <div class="block"><h5>Select Size</h5><div class="chips" style="padding:0"><span class="chipb">6</span><span class="chipb">7</span><span class="chipb">8</span><span class="chipb">9</span><span class="chipb">10</span></div></div>
+   <div class="block" style="font-size:12.5px"><b>Lowest Price · Cash on Delivery · 7-day Returns</b><br><span style="color:#777">Return covers wrong or defective items. "Any reason" return costs extra.</span></div>
+   <button class="btnp" data-go="6" type="button">Buy now</button></div><div class="toast" id="toast"></div>`
+ :`${sbar()}${rib()}<div class="scr"><div class="pdp-img">${IC.sneaker(x.c)}</div><div class="pd"><h4>${x.t}</h4><div class="big">₹${x.p}</div><span class="rtp ${x.r<4?'low':''}">${x.r} ★</span> <small style="color:#888">${x.n} ratings</small></div>
+   <div class="ktab"><div><span>Type</span>${x.f[0]}</div><div><span>Upper</span>${x.f[1]}</div><div><span>Sizes</span>${x.t.split('·').pop().trim()}</div><div><span>Fit</span>${x.fit||'Not enough reviews to say'}</div><div><span>Seller title</span><i style="color:#999">${x.o}</i></div></div>
+   <div class="badge-line">📸 <span><b>Pack Proof on this order.</b> You will see a photo of your packed item before it ships.</span></div>
+   <div class="badge-line">🚚 <span><b>7-day return by home pickup.</b> The Pack Proof photo is attached to any claim.</span></div>
+   <button class="btnp" data-go="6" type="button">Buy now</button></div><div class="toast" id="toast"></div>`},
+ // 6 checkout
+ ()=>{const x=SNEAK[S.sk||5];return `${sbar()}${rib()}<div class="scr"><div class="ah"><span class="wm" style="font-size:18px">Checkout</span></div>
+   <div class="block"><h5>Deliver to</h5><div style="font-size:12.5px">Ravi Sharma · Ward 12, Subhash Nagar, Bhilwara 311001</div></div>
+   <div class="block"><h5>Pay</h5><div class="opt on"><span>Cash on delivery</span><span>₹${x.p}</span></div><div class="opt"><span>UPI</span><span>₹${x.p}</span></div></div>
+   ${S.mode==='mm'?`<div class="block" style="font-size:12.5px">📸 Pack Proof included<br>🏷 Referred by Raju Mobiles · he earns 1.5% on this order<br><span style="color:#777">Returns for shoes: home pickup. Raju Mobiles accepts returns for phone and accessory orders.</span></div>`:`<div class="block" style="font-size:12.5px;color:#777">No information on what happens if the wrong item arrives.</div>`}
+   <button class="btnp" data-go="7" type="button">Place order · ₹${x.p}</button></div><div class="toast" id="toast"></div>`},
+ // 7 tracking
+ ()=>{const x=SNEAK[S.sk||5];return S.mode==='today'?`${sbar()}${rib()}<div class="scr"><div class="ah"><span class="wm" style="font-size:18px">Track order</span></div>
+   <div class="block"><ul class="tl"><li><span>Ordered<small>Mon 7:42 pm</small></span></li><li><span>Shipped<small>Wed</small></span></li><li class="p"><span>Out for delivery<small>Expected Sat</small></span></li></ul></div>
+   <div class="block" style="font-size:12.5px;color:#777">You will find out what is inside when you open it.</div><button class="btnp" data-go="8" type="button">Next: a return</button></div><div class="toast" id="toast"></div>`
+ :`${sbar()}${rib()}<div class="scr"><div class="ah"><span class="wm" style="font-size:18px">Track order</span></div>
+   <div class="block"><h5>This is in your parcel</h5><div class="packshot">${IC.sneaker(x.c)}<span class="stamp">PACK PROOF ✓ 96% MATCH</span></div>
+   <div class="checks"><span>Colour matches listing</span><span>Size label reads UK 9</span><span>Same design as listing photo</span></div><small style="color:#777">Packed by seller Wed 11:05 am · checked before pickup</small></div>
+   <div class="block"><ul class="tl"><li><span>Ordered<small>Mon 7:42 pm</small></span></li><li><span>Packed and verified<small>Wed 11:05 am</small></span></li><li><span>Shipped<small>Wed 6:30 pm</small></span></li><li class="p"><span>Out for delivery<small>Expected Sat</small></span></li></ul></div>
+   <button class="btnp alt" id="claim" type="button">${S.claim?'✓ Claim raised with this photo as proof':'Wrong item? Claim in one tap'}</button><button class="btnp" data-go="8" type="button">Next: a return</button></div><div class="toast" id="toast"></div>`},
+ // 8 return
+ ()=>S.mode==='today'?`${sbar()}${rib()}<div class="scr"><div class="ah"><span class="wm" style="font-size:18px">Return</span></div>
+   <div class="block"><ul class="tl"><li><span>Return requested<small>Jan 9</small></span></li><li class="w"><span>Pickup rescheduled<small>Jan 12</small></span></li><li class="w"><span>Pickup rescheduled<small>Jan 16</small></span></li><li class="p"><span>Refund<small>After pickup</small></span></li></ul></div>
+   <div class="block" style="font-size:12.5px;font-style:italic">"Trying to return a product since jan 9th and the delivery team has not been picking it up" <br><span style="font-style:normal;color:#777">Suresh Babu · Trustpilot · 22 Jan 2026</span></div></div><div class="toast" id="toast"></div>`
+ :S.retDone?`${sbar()}${rib()}<div class="scr"><div class="okbig"><div class="c">✓</div><h4>Charger return accepted at Raju Mobiles</h4><p>Raju tested the charger, scanned the return at 5:40 pm, and your refund has started. No waiting at home for a pickup.</p></div>
+   <div class="block"><ul class="tl"><li><span>Dropped at Raju Mobiles<small>Today 5:40 pm</small></span></li><li><span>Refund started<small>Today 5:41 pm</small></span></li><li class="p"><span>Collected by Valmo<small>Tomorrow, with the shop's other parcels</small></span></li></ul></div>
+   <button class="btnp alt" data-go="0" type="button">Restart the journey</button></div><div class="toast" id="toast"></div>`
+ :`${sbar()}${rib()}<div class="scr"><div class="ah"><span class="wm" style="font-size:18px">Return</span></div>
+   <div class="block" style="display:flex;gap:10px;align-items:center"><div style="width:52px;height:52px;border-radius:10px;background:#f6f1f4;display:grid;place-items:center">${IC.charger()}</div><div style="font-size:12.5px"><b>Fast charger 18W · Type-C</b><br>Bought in Phone gear · stopped working</div></div>
+   <div class="block"><h5>How do you want to return?</h5><button class="opt on" type="button"><span>🏪 Drop at Raju Mobiles · phone &amp; accessory returns</span><span style="color:#1f8a4c;font-weight:700">Today</span></button><button class="opt" type="button"><span>Home pickup</span><span>2–4 days</span></button></div>
+   <div class="block" style="text-align:center"><h5>Show this at the counter</h5><div class="qr" style="width:120px;height:120px">${qrSVG()}</div><small style="color:#777">Return ID R-4471-BHL</small></div>
+   <button class="btnp" id="dropIt" type="button">Raju scans it</button></div><div class="toast" id="toast"></div>`
+];
+function toast(m){const t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400)}
+function renderJ(){
+ $('#screen').innerHTML=SCREENS[S.step]();
+ $('#steps').innerHTML=STEPS.map((s,i)=>`<button class="step" type="button" data-step="${i}" ${i===S.step?'aria-current="step"':''}><span class="n">${i+1}</span><span><b>${s[0]}</b><span>${s[1]}</span></span></button>`).join('');
+ const n=NOTES[S.step];
+ $('#note').innerHTML=`<span class="feat">${n.f}</span><div class="cmp"><div class="t"><small>Meesho today</small>${n.t}</div><div class="m"><small>With Mission Mode</small>${n.m}</div></div><span class="kpi-chip">KPI · ${n.k}</span>${n.s?`<p class="src">${n.s}</p>`:''}`;
+ document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
+ $('#prev').disabled=S.step===0;$('#next').textContent=S.step===8?'Start over':'Next moment';
+}
+document.addEventListener('click',e=>{
+ const t=e.target;
+ const m=t.closest('[data-mode]');if(m){S.mode=m.dataset.mode;renderJ();return}
+ const mg=t.closest('[data-mode-go]');if(mg){S.mode=mg.dataset.modeGo;renderJ();return}
+ const st=t.closest('[data-step]');if(st){S.step=+st.dataset.step;S.retDone=false;renderJ();return}
+ const g=t.closest('[data-go]');if(g){if(g.dataset.sk)S.sk=+g.dataset.sk;const was=S.step;S.step=+g.dataset.go;if(S.step!==8)S.retDone=false;if(S.step===0)S.claim=false;renderJ();if(was===0&&S.step===1&&S.mode==='mm')toast('Opened from Raju Mobiles · phone: Redmi 13C');return}
+ const mi=t.closest('[data-mission]');if(mi){S.mission=mi.dataset.mission;renderJ();return}
+ const bu=t.closest('[data-budget]');if(bu){S.budget=bu.dataset.budget;S.ladder={'₹299':0,'₹799':1}[S.budget]??2;renderJ();return}
+ const sy=t.closest('[data-style]');if(sy){S.style=sy.dataset.style;renderJ();return}
+ const la=t.closest('[data-ladder]');if(la){S.ladder=+la.dataset.ladder;renderJ();return}
+ if(t.closest('#claim')){S.claim=true;renderJ();toast('Claim raised. The packing photo is attached as proof.');return}
+ if(t.closest('#dropIt')){S.retDone=true;renderJ();toast('Charger return scanned at Raju Mobiles. Refund started.');return}
+});
+$('#next').addEventListener('click',()=>{S.step=S.step===8?0:S.step+1;S.retDone=false;renderJ()});
+$('#prev').addEventListener('click',()=>{if(S.step>0){S.step--;S.retDone=false;renderJ()}});
+
+/* ---------- behind the scenes ---------- */
+const LIST=[
+ {k:'Sneakers',before:'Cutiepie Men Sneakers',fields:'category: Men Sneakers\ncolour: Beige\nmaterial: (empty)\nsizes: 6, 7, 8, 9, 10\nratings: Supplier (new)',photo:[['Closure','Lace-up',0.94],['Upper','Canvas',0.91],['Style','Low-top',0.96]],cons:[['Colour field "Beige" vs photo','agrees',true]],rev:'Not enough reviews (fewer than 20) · no fit hint shown',after:'Beige low-top sneakers · canvas · UK 6–10'},
+ {k:'Shirt',before:'Pretty Ravishing Men Shirts',fields:'category: Men Shirts\nfabric: Cotton\nsleeve: Long Sleeves\nfit: Slim\nsizes: M, L, XL, XXL',photo:[['Pattern','Checked',0.93],['Collar','Spread',0.88]],cons:[['Fabric "Cotton" vs photo texture','agrees',true],['Fit "Slim" vs photo','agrees',true]],rev:'Illustrative: if 20+ reviews agree on fit, show it (e.g. "true to size")',after:'Slim-fit cotton check shirt · full sleeve · M–XXL · true to size'},
+ {k:'Charger',before:'2 Port Mobile Charger Original Adapter Like… 4.8Amp',fields:'category: Chargers\noutput (title): 4.8A\nwattage (highlights): 3 Amp\nwarranty: 1 Month (Carry In)\nBIS: "may be regulated"',photo:[['Ports','2 × USB-A',0.97],['Cable','Type-C, 1 m',0.9]],cons:[['Output 4.8A (title) vs 3A (highlights)','conflict',false],['BIS number','missing',false]],rev:'1,096 ratings · 17.6% Average or Poor',after:'Dual-USB charger · Type-C cable 1 m',flag:'Output and BIS left out of the title and sent back to the seller to fix.'}];
+let li=0;
+function renderPick(){
+ $('#pickL').innerHTML=LIST.map((x,i)=>`<button type="button" data-li="${i}" aria-pressed="${i===li}">${x.k}: "${x.before.length>26?x.before.slice(0,26)+'…':x.before}"</button>`).join('');
+ const x=LIST[li];
+ $('#pipe').innerHTML=[
+  ['1 · Read the listing fields',`<div class="k">${x.fields}</div>`],
+  ['2 · Read the photos (vision model)',`<div class="k">${x.photo.map(p=>`${p[0]}: ${p[1]}<span class="conf ${p[2]>=0.85?'ok':'no'}">${Math.round(p[2]*100)}%</span>`).join('\n')}</div>`],
+  ['3 · Consistency check (second model)',`<div class="k">${x.cons.map(c=>`${c[0]}: <span class="conf ${c[2]?'ok':'no'}">${c[1]}</span>`).join('\n')}</div>`],
+  ['4 · Review signal',`<div class="k">${x.rev}</div>`],
+  ['5 · Clean title, stored as a field',`<div class="out"><div class="before">${x.before}</div><div class="after">${x.after}</div>${x.flag?`<div style="margin-top:6px;font-size:13px;color:var(--bad)">⚑ ${x.flag}</div>`:''}</div>`]
+ ].map(([h,b],i)=>`<div class="ps" id="ps${i}"><h4>${h}</h4>${b}</div>`).join('');
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-li]');if(b){li=+b.dataset.li;renderPick()}});
+$('#runL').addEventListener('click',()=>{renderPick();const red=matchMedia('(prefers-reduced-motion: reduce)').matches;[0,1,2,3,4].forEach(i=>setTimeout(()=>$('#ps'+i)?.classList.add('on'),red?0:i*450))});
+const PACK=[{k:'Correct item',l:IC.sneaker('#f2f2f2'),p:IC.sneaker('#f2f2f2'),lt:'Listing: white chunky sneakers, UK 9',pt:'Packing photo: white chunky sneakers, label UK 9',ok:true,v:'Match 96% · pickup allowed · buyer sees this photo in tracking'},
+ {k:'Wrong colour',l:IC.buds('#ffffff'),p:IC.buds('#2b2b2b'),lt:'Listing: white earbuds',pt:'Packing photo: black earbuds in a white box',ok:false,v:'Colour mismatch · pickup blocked until the seller re-packs. This is the real case of a buyer who waited 66 days for a refund.'}];
+let pi=0;
+function renderPack(){
+ $('#pickP').innerHTML=PACK.map((x,i)=>`<button type="button" data-pi="${i}" aria-pressed="${i===pi}">${x.k}</button>`).join('');
+ const x=PACK[pi];
+ $('#pack').innerHTML=`<div class="matchbox"><figure><div>${x.l}</div><figcaption>${x.lt}</figcaption></figure><figure><div>${x.p}</div><figcaption>${x.pt}</figcaption></figure></div><div class="verdict ${x.ok?'ok':'no'}">${x.ok?'✓':'✕'} ${x.v}</div>
+ <p class="src">Runs on: orders ≥ ₹499, high-claim categories (earbuds, shoes, watches) and new sellers. Builds on Meesho's existing transparent packaging and image capture (Meesho tech blog).</p>`;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pi]');if(b){pi=+b.dataset.pi;renderPack()}});
+
+/* ---------- business model (mirrors Excel) ---------- */
+const Y=['FY27 Q4','FY28','FY29','FY30','FY31'];
+const A={shops:[2000,20000,60000,100000,150000],bps:[12.5,50,50,50,50],ms:[0.3,4,9,13,16],on:[1.5,5,6,7,7.5],aovn:[300,310,320,330,340],reach:[5,25,50,70,80],extra:[0.05,0.2,0.4,0.5,0.5],aovx:290,take:0.304,cm:0.046,checks:[10,100,250,400,450],cc:0.30,cl:[3,1,1,1,1],fte:[6,8,12,15,15],ftec:0.45,frac:[0.25,1,1,1,1],onb:2000,mkt:[15,40,60,75,80]};
+const SC={bear:[0.6,0.6],base:[1,1],bull:[1.25,1.2]};
+const B={s:'base',comm:1.5,bonus:50,mkt:100};
+function model(){const [bm,em]=SC[B.s];let cum=0,prev=0;const before=[0,3,15,27,39],span=[3,12,12,12,12];let pay=null;const out=[];
+ for(let i=0;i<5;i++){const dk=A.shops[i]*A.bps[i]/1e6*bm,ms=A.ms[i]*bm,nb=dk+ms;const nmvN=nb*A.on[i]*A.aovn[i]/10,nmvD=dk*A.on[i]*A.aovn[i]/10,nmvX=A.reach[i]*A.extra[i]*em*A.aovx/10,nmv=nmvN+nmvX;
+  const rev=nmv*A.take,cm=nmv*A.cm,comm=nmvD*B.comm/100,bonus=dk*B.bonus/10,pack=A.checks[i]*A.cc/10,squad=A.fte[i]*A.ftec*A.frac[i],onb=(A.shops[i]-prev)*A.onb/1e7,mk=A.mkt[i]*B.mkt/100;prev=A.shops[i];
+  const cost=comm+bonus+pack+A.cl[i]+squad+onb+mk,e=cm-cost,pc=cum;cum+=e;
+  if(pay===null){if(i===0&&cum>=0)pay=3;else if(i>0&&pc<0&&cum>=0)pay=before[i]+(-pc/e)*span[i]}
+  out.push({y:Y[i],dk,ms,nb,nmv,rev,cm,comm,bonus,pack,cl:A.cl[i],squad,onb,mk,cost,e,cum})}
+ return {r:out,pay}}
+const fmt=(n,d=0)=>{const a=Math.abs(n);if(a<0.05)return '0';const s=a.toLocaleString('en-IN',{maximumFractionDigits:d,minimumFractionDigits:d});return n<0?'('+s+')':s};
+function renderBiz(){
+ const {r,pay}=model();
+ if(pay!==null){const d=new Date(2027,0,1);d.setMonth(d.getMonth()+Math.ceil(pay));$('#k-pay').textContent=Math.round(pay)+' months';$('#k-pay2').textContent='from Jan 2027 pilot · around '+d.toLocaleString('en-IN',{month:'short',year:'numeric'})}else{$('#k-pay').textContent='Beyond FY31';$('#k-pay2').textContent='the pilot kill rule would stop spend'}
+ const peak=Math.max(0,-Math.min(...r.map(x=>x.cum)));$('#k-peak').textContent='₹'+fmt(peak)+' cr';$('#k-peak2').textContent=(peak/6521*100).toFixed(1)+'% of Meesho\'s ₹6,521 cr cash';
+ $('#k-nmv').textContent='₹'+fmt(r[4].nmv)+' cr';$('#k-nmv2').textContent=r[4].nb.toFixed(1)+'M new active male buyers';
+ $('#k-e').textContent='₹'+fmt(r[4].e)+' cr';$('#k-e2').textContent=(r[4].e/12626*100).toFixed(1)+'% of Meesho FY26 revenue';
+ const row=(l,f,cls='',d=0)=>`<tr class="${cls}"><td>${l}</td>${r.map(x=>{const v=f(x);return `<td class="${cls.includes('tot')?(v<0?'neg':'pos'):''}">${fmt(v,d)}</td>`}).join('')}</tr>`;
+ $('#pl').innerHTML=`<thead><tr><th>₹ crore</th>${Y.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>
+ <tr class="sec"><td colspan="6">Buyers and sales</td></tr>${row('New male buyers via Dukaan QR (M)',x=>x.dk,'',2)}${row('New male buyers via Mission Start (M)',x=>x.ms,'',1)}${row('Incremental NMV',x=>x.nmv)}${row('Incremental revenue (30.4% of NMV)',x=>x.rev)}${row('Incremental contribution (4.6% of NMV)',x=>x.cm,'',1)}
+ <tr class="sec"><td colspan="6">Costs</td></tr>${row(`Shop commission (${B.comm}%)`,x=>-x.comm,'',1)}${row(`First-order bonus to shops (₹${B.bonus})`,x=>-x.bonus,'',1)}${row('Pack Proof checks',x=>-x.pack,'',1)}${row('Clear Listings compute',x=>-x.cl,'',1)}${row('Product & tech squad',x=>-x.squad,'',1)}${row('Shop onboarding',x=>-x.onb,'',1)}${row('Marketing and content',x=>-x.mk,'',1)}
+ <tr class="sec"><td colspan="6">Profit</td></tr>${row('Incremental EBITDA impact',x=>x.e,'tot',1)}${row('Cumulative',x=>x.cum,'tot',1)}</tbody>`;
+ bars(r);line(r);
+}
+function ticks(max){const st=Math.pow(10,Math.floor(Math.log10(max)));const m=max/st;const s=(m<=2?.5:m<=5?1:2)*st;const o=[];for(let v=0;v<=max+1e-9;v+=s)o.push(v);if(o[o.length-1]<max)o.push(o[o.length-1]+s);return o}
+function bars(r){const W=460,H=240,L=50,R=10,T=14,Bt=28;const tk=ticks(Math.max(...r.map(x=>x.nmv)));const top=tk[tk.length-1];const y=v=>T+(H-T-Bt)*(1-v/top);const bw=(W-L-R)/r.length;let s='';
+ tk.forEach(t=>{s+=`<line x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${fmt(t)}</text>`});
+ r.forEach((x,i)=>{const cx=L+bw*i+bw/2,w=bw*.52,h=Math.max(y(0)-y(x.nmv),1);s+=`<path d="M${cx-w/2},${y(0)} v${-Math.max(h-4,0)} q0,-4 4,-4 h${w-8} q4,0 4,4 v${Math.max(h-4,0)} z" fill="var(--bar1)"/><text x="${cx}" y="${H-8}" text-anchor="middle">${x.y}</text><rect class="hit" x="${cx-bw/2}" y="${T}" width="${bw}" height="${H-T-Bt}" fill="transparent" data-i="${i}"/>`});
+ const l=r[4];s+=`<text x="${L+bw*4.5}" y="${y(l.nmv)-7}" text-anchor="middle" style="fill:var(--ink);font-weight:600">₹${fmt(l.nmv)}</text>`;
+ $('#svg1').innerHTML=s;hover('#svg1','#tip1',r,x=>`${x.y}: ₹${fmt(x.nmv)} cr NMV`)}
+function line(r){const W=460,H=240,L=50,R=16,T=16,Bt=28;const v=r.map(x=>x.cum);let mn=Math.min(0,...v),mx=Math.max(0,...v);const pad=(mx-mn)*.12||10;mn-=pad;mx+=pad;
+ const x=i=>L+(W-L-R)*i/(r.length-1),y=q=>T+(H-T-Bt)*(mx-q)/(mx-mn);let s='';const rng=mx-mn;const st=Math.pow(10,Math.floor(Math.log10(rng)));const step=rng/st>5?st:rng/st>2?st/2:st/5;
+ for(let q=Math.ceil(mn/step)*step;q<=mx;q+=step){s+=`<line x1="${L}" x2="${W-R}" y1="${y(q)}" y2="${y(q)}" stroke="var(--grid)"/><text x="${L-6}" y="${y(q)+4}" text-anchor="end">${fmt(q)}</text>`}
+ s+=`<line x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink2)"/>`;
+ const pts=r.map((d,i)=>`${x(i)},${y(d.cum)}`).join(' ');
+ s+=`<polygon points="${x(0)},${y(0)} ${pts} ${x(4)},${y(0)}" fill="var(--bar1)" opacity=".12"/><polyline points="${pts}" fill="none" stroke="var(--bar1)" stroke-width="2"/>`;
+ r.forEach((d,i)=>{s+=`<circle cx="${x(i)}" cy="${y(d.cum)}" r="${i===4?5:3.5}" fill="${d.cum<0?'var(--bad)':'var(--good)'}" stroke="var(--panel)" stroke-width="2"/><text x="${x(i)}" y="${H-8}" text-anchor="middle">${d.y}</text><rect class="hit" x="${x(i)-40}" y="${T}" width="80" height="${H-T-Bt}" fill="transparent" data-i="${i}"/>`});
+ s+=`<text x="${x(4)-8}" y="${y(r[4].cum)-10}" text-anchor="end" style="fill:var(--ink);font-weight:600">₹${fmt(r[4].cum)}</text>`;
+ $('#svg2').innerHTML=s;hover('#svg2','#tip2',r,d=>`${d.y}: year ₹${fmt(d.e,1)} cr · cumulative ₹${fmt(d.cum,1)} cr`)}
+function hover(sv,tp,r,txt){const svg=$(sv),tip=$(tp),box=svg.closest('.chart');svg.querySelectorAll('.hit').forEach(h=>{h.addEventListener('mousemove',ev=>{const b=box.getBoundingClientRect();tip.textContent=txt(r[+h.dataset.i]);tip.style.opacity=1;let lx=ev.clientX-b.left+12;if(lx>b.width-tip.offsetWidth-8)lx=ev.clientX-b.left-tip.offsetWidth-12;tip.style.left=lx+'px';tip.style.top=(ev.clientY-b.top-34)+'px'});h.addEventListener('mouseleave',()=>tip.style.opacity=0)})}
+document.querySelectorAll('.seg3 button').forEach(b=>b.addEventListener('click',()=>{B.s=b.dataset.s;document.querySelectorAll('.seg3 button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderBiz()}));
+[['comm',v=>v+'%'],['bonus',v=>'₹'+v],['mkt',v=>v+'%']].forEach(([k,f])=>{const el=$('#r-'+k);el.addEventListener('input',()=>{B[k]=+el.value;$('#o-'+k).textContent=f(+el.value);renderBiz()})});
+
+/* ---------- tabs ---------- */
+function show(v){const V=['journey','engine','shop','business'];if(!V.includes(v))v='journey';V.forEach(k=>$('#v-'+k).hidden=k!==v);document.querySelectorAll('nav.tabs a').forEach(a=>a.dataset.v===v?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'))}
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+renderJ();renderPick();[0,1,2,3,4].forEach(i=>$('#ps'+i).classList.add('on'));renderPack();renderBiz();show(location.hash.slice(1));
+</script>
+
+</body>
+</html>
